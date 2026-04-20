@@ -1141,8 +1141,11 @@ function openAddModal(){editingIdx=null;document.getElementById('add-modal-title
 
 function renderForm(r){
   const v=k=>esc(r[k]||'');
-  const sel=(k,opts)=>`<select class="form-select" data-key="${esc(k)}"><option value="">선택</option>${opts.map(o=>`<option value="${esc(o)}"${r[k]===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
-  const inp=(k,t='text',ph='')=>`<input class="form-input" type="${t}" data-key="${esc(k)}" value="${v(k)}"${ph?` placeholder="${ph}"`:''}>`;
+  // readonly 옵션 추가: 회색 배경 + 수정 불가
+  const READ_ONLY_STYLE='background:var(--bg3);color:var(--text2);cursor:not-allowed;opacity:.75';
+  const READ_ONLY_TITLE='투자전략팀이 관리하는 항목입니다. 이 페이지에서는 수정할 수 없습니다.';
+  const sel=(k,opts,ro)=>`<select class="form-select" data-key="${esc(k)}"${ro?` disabled title="${READ_ONLY_TITLE}" style="${READ_ONLY_STYLE}"`:''}><option value="">선택</option>${opts.map(o=>`<option value="${esc(o)}"${r[k]===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  const inp=(k,t='text',ph='',ro)=>`<input class="form-input" type="${t}" data-key="${esc(k)}" value="${v(k)}"${ph?` placeholder="${ph}"`:''}${ro?` readonly title="${READ_ONLY_TITLE}" style="${READ_ONLY_STYLE}"`:''}>`;
   const ta=k=>`<textarea class="form-textarea" data-key="${esc(k)}">${esc(r[k]||'')}</textarea>`;
   // 10번: No. 자동 계산
   const nextNo=allData.reduce((m,rec)=>Math.max(m,parseInt(rec['No.'])||0),0)+1;
@@ -1187,13 +1190,13 @@ function renderForm(r){
         <div class="form-group span2"><div class="form-label">비고</div>${inp('비고')}</div>
       </div>
     </div>
-    <div class="form-section"><div class="form-section-title">배치 & 직접투자 (투자전략팀)</div>
+    <div class="form-section"><div class="form-section-title">배치 & 직접투자 (투자전략팀) <span style="font-weight:400;color:var(--text3);font-size:11px">— 🔒 투자전략팀 관리 항목, 수정 불가</span></div>
       <div class="form-grid cols3">
-        <div class="form-group"><div class="form-label">배치 신청횟수</div>${inp('배치신청횟수','number')}</div>
-        <div class="form-group"><div class="form-label">배치 선정기수</div>${inp('배치선정 기수','number')}</div>
-        <div class="form-group"><div class="form-label">배치 지원루트</div>${sel('배치지원루트',BATCH_ROUTE_OPTS)}</div>
-        <div class="form-group"><div class="form-label">TYPE1(직접투자) 여부</div>${sel('직접투자 여부 (O/X)',['O','X'])}</div>
-        <div class="form-group"><div class="form-label">TYPE1(직접투자) 일자</div>${inp('직접투자 일자','date')}</div>
+        <div class="form-group"><div class="form-label">배치 신청횟수</div>${inp('배치신청횟수','number','',true)}</div>
+        <div class="form-group"><div class="form-label">배치 선정기수</div>${inp('배치선정 기수','number','',true)}</div>
+        <div class="form-group"><div class="form-label">배치 지원루트</div>${sel('배치지원루트',BATCH_ROUTE_OPTS,true)}</div>
+        <div class="form-group"><div class="form-label">TYPE1(직접투자) 여부</div>${sel('직접투자 여부 (O/X)',['O','X'],true)}</div>
+        <div class="form-group"><div class="form-label">TYPE1(직접투자) 일자</div>${inp('직접투자 일자','date','',true)}</div>
         <div class="form-group"><div class="form-label">디캠프 기준 산업분류</div>${sel('디캠프 기준 산업분류',INDUSTRY_OPTS)}</div>
         <div class="form-group"><div class="form-label">기업가치 0~150억원</div>${sel('기업가치(0~150억원)',['O','X'])}</div>
         <div class="form-group"><div class="form-label">기업가치 150~360억원</div>${sel('기업가치(150~360억원)',['O','X'])}</div>

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>dcamp · 딜소싱 모니터링 시스템</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap');
@@ -351,278 +352,266 @@
 </style>
 </head>
 <body>
-
 <!-- LOGIN -->
 <div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">d<span>camp</span></div>
-    <div class="login-badge">TYPE1 &middot; 투자실 전용</div>
-    <div class="login-sub">딜소싱 모니터링 시스템</div>
-    <label class="login-label">접속 비밀번호</label>
-    <input class="login-input" type="password" id="pw-input" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')tryLogin()">
-    <button class="login-btn" onclick="tryLogin()">접속하기</button>
-    <div class="login-err" id="login-err">비밀번호가 올바르지 않습니다.</div>
-  </div>
+<div class="login-box">
+<div class="login-logo">d<span>camp</span></div>
+<div class="login-badge">TYPE1 · 투자실 전용</div>
+<div class="login-sub">딜소싱 모니터링 시스템</div>
+<label class="login-label">접속 비밀번호</label>
+<input class="login-input" id="pw-input" onkeydown="if(event.key==='Enter')tryLogin()" placeholder="비밀번호를 입력하세요" type="password"/>
+<button class="login-btn" onclick="tryLogin()">접속하기</button>
+<div class="login-err" id="login-err">비밀번호가 올바르지 않습니다.</div>
 </div>
-
+</div>
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;height:100vh;">
-  <div class="topbar">
-    <div class="topbar-logo">d<span>camp</span></div>
-    <div class="topbar-badge">TYPE1</div>
-    <div class="topbar-sep"></div>
-    <div class="topbar-title">딜소싱 모니터링 시스템</div>
-    <div class="topbar-right">
-      <div class="stat-chip">전체 <span id="stat-total">-</span>건</div>
-      <div class="stat-chip">링크확인 <span id="stat-link">-</span>건</div>
-      <div class="stat-chip">미제출 <span id="stat-missing">-</span>건</div>
-      <button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()" title="구글시트 최신 데이터 불러오기"><span class="spin">🔄</span> 새로고침</button>
-      <button class="btn-add" onclick="openAddModal()">＋ 추가</button>
-      <button class="btn-logout" onclick="logout()">로그아웃</button>
-    </div>
-  </div>
-
-  <div class="view-tabs">
-    <button class="view-tab active" id="tab-dashboard" onclick="switchView('dashboard')">📊 총괄 대시보드</button>
-    <button class="view-tab" id="tab-table" onclick="switchView('table')">📋 전체 데이터</button>
-    <button class="view-tab" id="tab-briefing" onclick="openBriefingAuth()" style="margin-left:auto;color:var(--orange);border-color:var(--orange)">📄 주간 브리핑</button>
-  </div>
-
-  <details class="notice-bar">
-    <summary><span class="notice-icon">ℹ️</span><span class="notice-title">업무 프로세스 및 업데이트 주기</span><span class="notice-hint">클릭하여 펼치기 ▾</span></summary>
-    <div class="notice-body">
-      <div>
-        <div class="notice-col-title">업무 진행 프로세스 (데이터 시작 : 2026년)</div>
-        <table class="notice-table">
-          <tr><td>▼ <strong>펀드팀</strong> (펀드별 투자검토보고서 자료 공유)</td></tr>
-          <tr><td>▼ <strong>투자전략팀</strong> (배치 및 직접투자 신청/선정/투자 필터링)</td></tr>
-          <tr><td>▼ <strong>투자팀</strong> (검토대상 자료 확인 및 필요시 펀드팀 연결 요청)</td></tr>
-          <tr><td>▼ <strong>펀드팀 &amp; 투자팀</strong> 담당 심사역 연결 (필요한 경우)</td></tr>
-        </table>
-      </div>
-      <div>
-        <div class="notice-col-title">인턴 업데이트 주기</div>
-        <table class="notice-table">
-          <thead><tr><th>팀</th><th>업데이트 주기</th></tr></thead>
-          <tbody>
-            <tr><td>펀드팀</td><td class="cycle">매주 수요일</td></tr>
-            <tr><td>투자전략팀</td><td class="cycle">매주 목요일</td></tr>
-            <tr><td>투자팀</td><td class="cycle">매주 목요일~금요일</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </details>
-
-  <!-- DASHBOARD -->
-  <div id="view-dashboard" class="dashboard-wrap">
-    <div class="dash-team-grid" id="dash-team-grid"></div>
-    <div class="dash-bottom-grid" id="dash-bottom-grid"></div>
-  </div>
-
-  <!-- TABLE VIEW -->
-  <div id="view-table" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-    <!-- 선택 삭제 툴바 -->
-    <div class="sel-toolbar" id="sel-toolbar">
-      <span class="sel-count" id="sel-count">0건 선택됨</span>
-      <button class="btn-del-sel" onclick="deleteSelected()">🗑 선택 삭제</button>
-      <button class="btn-cancel-sel" onclick="clearSelection()">취소</button>
-    </div>
-    <!-- FILTERS -->
-    <div class="filter-bar">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" id="search-input" placeholder="기업명, GP명 검색..." oninput="applyFilters()">
-      </div>
-      <div class="ms-wrap" id="ms-gp">
-        <div class="ms-btn" id="ms-gp-btn" onclick="toggleMs('gp')"><span id="ms-gp-label">전체 GP</span></div>
-        <div class="ms-dropdown">
-          <div class="ms-search"><input type="text" placeholder="GP 검색..." oninput="filterMsItems('gp',this.value)"></div>
-          <div id="ms-gp-items"></div>
-          <span class="ms-clear" onclick="clearMs('gp')">선택 초기화</span>
-        </div>
-      </div>
-      <select class="filter-select" id="filter-link" onchange="applyFilters()">
-        <option value="">보고서 상태 전체</option>
-        <option value="submitted">제출완료</option>
-        <option value="missing">미제출</option>
-      </select>
-      <div class="ms-wrap" id="ms-val">
-        <div class="ms-btn" id="ms-val-btn" onclick="toggleMs('val')"><span id="ms-val-label">기업가치 전체</span></div>
-        <div class="ms-dropdown">
-          <div id="ms-val-items">
-            <div class="ms-item"><input type="checkbox" id="val-0-150" value="0_150" onchange="applyFilters()"><label for="val-0-150">기업가치 0~150억원 해당</label></div>
-            <div class="ms-item"><input type="checkbox" id="val-150-360" value="150_360" onchange="applyFilters()"><label for="val-150-360">기업가치 150~360억원 해당</label></div>
-          </div>
-          <span class="ms-clear" onclick="clearMs('val')">선택 초기화</span>
-        </div>
-      </div>
-      <select class="filter-select" id="filter-confirmed" onchange="applyFilters()">
-        <option value="">확인 여부</option>
-        <option value="done">확인 완료</option>
-        <option value="pending">미확인</option>
-      </select>
-      <select class="filter-select" id="filter-intention" onchange="applyFilters()">
-        <option value="">검토 의향 전체</option>
-        <option value="투자검토진행중">투자검토진행중</option>
-        <option value="기업가치 초과">기업가치 초과</option>
-        <option value="투자완료">투자완료</option>
-        <option value="동일기업 검토완료">동일기업 검토완료</option>
-      </select>
-      <div class="ms-wrap" id="ms-domain">
-        <div class="ms-btn" id="ms-domain-btn" onclick="toggleMs('domain')"><span id="ms-domain-label">투자도메인 전체</span></div>
-        <div class="ms-dropdown">
-          <div id="ms-domain-items"></div>
-          <span class="ms-clear" onclick="clearMs('domain')">선택 초기화</span>
-        </div>
-      </div>
-      <!-- 담당자배정 멀티셀렉트 -->
-      <div class="ms-wrap" id="ms-assignee">
-        <div class="ms-btn" id="ms-assignee-btn" onclick="toggleMs('assignee')"><span id="ms-assignee-label">담당자 전체</span></div>
-        <div class="ms-dropdown">
-          <div class="ms-search"><input type="text" placeholder="담당자 검색..." oninput="filterMsItems('assignee',this.value)"></div>
-          <div id="ms-assignee-items"></div>
-          <span class="ms-clear" onclick="clearMs('assignee')">선택 초기화</span>
-        </div>
-      </div>
-      <div class="ms-wrap" id="ms-cols">
-        <div class="ms-btn" id="ms-cols-btn" onclick="toggleMs('cols')" style="background:var(--bg3)"><span>📋 열 표시 설정</span></div>
-        <div class="ms-dropdown col-settings-drop">
-          <div class="col-settings-header">보고 싶은 열을 선택하세요</div>
-          <div id="ms-cols-items"></div>
-          <span class="ms-clear" onclick="selectAllCols()">모두 표시</span>
-        </div>
-      </div>
-      <button class="filter-btn" id="btn-batch" onclick="toggleFilter('batch')">배치 신청</button>
-      <button class="filter-btn" id="btn-direct" onclick="toggleFilter('direct')">직접투자</button>
-      <button class="filter-btn" onclick="clearFilters()" style="color:var(--danger)">필터 초기화</button>
-      <div class="filter-count" id="filter-count"></div>
-    </div>
-    <!-- TABLE -->
-    <div class="table-wrap" id="table-wrap">
-      <table id="main-table">
-        <thead><tr id="thead-row">
-          <th data-col="chk" style="width:36px;cursor:default" onclick="event.stopPropagation()">
-            <input type="checkbox" id="chk-all" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--orange);cursor:pointer;">
-            <div class="col-resizer"></div>
-          </th>
-          <th data-col="no" onclick="sortBy('no')" style="width:50px">No. <span class="sort-arrow" id="sa-no">↕</span><div class="col-resizer"></div></th>
-          <th data-col="company" onclick="sortBy('company')" style="width:140px">투자기업명 <span class="sort-arrow" id="sa-company">↕</span><div class="col-resizer"></div></th>
-          <th data-col="gp" onclick="sortBy('gp')" style="width:130px">GP명 <span class="sort-arrow" id="sa-gp">↕</span><div class="col-resizer"></div></th>
-          <th data-col="reviewer" style="width:120px">담당심사역<div class="col-resizer"></div></th>
-          <th data-col="fund" onclick="sortBy('fund')" style="width:160px">펀드명 <span class="sort-arrow" id="sa-fund">↕</span><div class="col-resizer"></div></th>
-          <th data-col="biz_no" style="width:120px">사업자등록번호<div class="col-resizer"></div></th>
-          <th data-col="industry" style="width:130px">업종(표준산업)<div class="col-resizer"></div></th>
-          <th data-col="biz" style="width:200px">주요사업<div class="col-resizer"></div></th>
-          <th data-col="inv_amt" onclick="sortBy('inv_amt')" style="width:90px;text-align:right">투자금액(억원) <span class="sort-arrow" id="sa-inv_amt">↕</span><div class="col-resizer"></div></th>
-          <th data-col="inv_date" onclick="sortBy('inv_date')" style="width:100px">투자일자 <span class="sort-arrow" id="sa-inv_date">↕</span><div class="col-resizer"></div></th>
-          <th data-col="inv_date_type" style="width:120px">투자일자기준<div class="col-resizer"></div></th>
-          <th data-col="pre" style="width:80px;text-align:right">Pre(억원)<div class="col-resizer"></div></th>
-          <th data-col="post" style="width:80px;text-align:right">Post(억원)<div class="col-resizer"></div></th>
-          <th data-col="val_type" style="width:100px">밸류기준<div class="col-resizer"></div></th>
-          <th data-col="link" style="width:90px">보고서<div class="col-resizer"></div></th>
-          <th data-col="batch_cnt" style="width:80px">배치신청횟수<div class="col-resizer"></div></th>
-          <th data-col="batch_sel" style="width:80px">배치선정기수<div class="col-resizer"></div></th>
-          <th data-col="batch_route" style="width:130px">배치지원루트<div class="col-resizer"></div></th>
-          <th data-col="direct" style="width:100px">TYPE1(직접투자)<div class="col-resizer"></div></th>
-          <th data-col="direct_date" style="width:100px">직접투자일자<div class="col-resizer"></div></th>
-          <th data-col="domain" style="width:150px">디캠프 투자도메인<div class="col-resizer"></div></th>
-          <th data-col="val_0_150" style="width:110px">기업가치 0~150억원<div class="col-resizer"></div></th>
-          <th data-col="val_150_360" style="width:120px">기업가치 150~360억원<div class="col-resizer"></div></th>
-          <th data-col="confirmed" style="width:80px">자료확인여부<div class="col-resizer"></div></th>
-          <th data-col="confirmer" style="width:80px">확인자<div class="col-resizer"></div></th>
-          <th data-col="confirm_date" style="width:90px">확인일자<div class="col-resizer"></div></th>
-          <th data-col="intention" style="width:100px">검토의향<div class="col-resizer"></div></th>
-          <th data-col="reason" style="width:100px">사유<div class="col-resizer"></div></th>
-          <th data-col="note" style="width:80px">비고<div class="col-resizer"></div></th>
-          <th data-col="inv_point" style="width:80px">투자포인트<div class="col-resizer"></div></th>
-          <th data-col="risk_point" style="width:80px">주요리스크<div class="col-resizer"></div></th>
-          <th data-col="assignee" style="width:100px">담당자배정<div class="col-resizer"></div></th>
-        </tr></thead>
-        <tbody id="table-body"></tbody>
-      </table>
-      <div class="empty-state" id="empty-state" style="display:none;">
-        <div class="icon">🔍</div><p>검색 결과가 없습니다.</p>
-      </div>
-    </div>
-    <div class="pagination" id="pagination"></div>
-  </div>
+<div class="topbar">
+<div class="topbar-logo">d<span>camp</span></div>
+<div class="topbar-badge">TYPE1</div>
+<div class="topbar-sep"></div>
+<div class="topbar-title">딜소싱 모니터링 시스템</div>
+<div class="topbar-right">
+<div class="stat-chip">전체 <span id="stat-total">-</span>건</div>
+<div class="stat-chip">링크확인 <span id="stat-link">-</span>건</div>
+<div class="stat-chip">미제출 <span id="stat-missing">-</span>건</div>
+<button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()" title="구글시트 최신 데이터 불러오기"><span class="spin">🔄</span> 새로고침</button>
+<button class="btn-add" onclick="openAddModal()">＋ 추가</button>
+<button class="btn-logout" onclick="logout()">로그아웃</button>
 </div>
-
+</div>
+<div class="view-tabs">
+<button class="view-tab active" id="tab-dashboard" onclick="switchView('dashboard')">📊 총괄 대시보드</button>
+<button class="view-tab" id="tab-table" onclick="switchView('table')">📋 전체 데이터</button>
+<button class="view-tab" id="tab-briefing" onclick="openBriefingAuth()" style="margin-left:auto;color:var(--orange);border-color:var(--orange)">📄 주간 브리핑</button>
+</div>
+<details class="notice-bar">
+<summary><span class="notice-icon">ℹ️</span><span class="notice-title">업무 프로세스 및 업데이트 주기</span><span class="notice-hint">클릭하여 펼치기 ▾</span></summary>
+<div class="notice-body">
+<div>
+<div class="notice-col-title">업무 진행 프로세스 (데이터 시작 : 2026년)</div>
+<table class="notice-table">
+<tr><td>▼ <strong>펀드팀</strong> (펀드별 투자검토보고서 자료 공유)</td></tr>
+<tr><td>▼ <strong>투자전략팀</strong> (배치 및 직접투자 신청/선정/투자 필터링)</td></tr>
+<tr><td>▼ <strong>투자팀</strong> (검토대상 자료 확인 및 필요시 펀드팀 연결 요청)</td></tr>
+<tr><td>▼ <strong>펀드팀 &amp; 투자팀</strong> 담당 심사역 연결 (필요한 경우)</td></tr>
+</table>
+</div>
+<div>
+<div class="notice-col-title">인턴 업데이트 주기</div>
+<table class="notice-table">
+<thead><tr><th>팀</th><th>업데이트 주기</th></tr></thead>
+<tbody>
+<tr><td>펀드팀</td><td class="cycle">매주 수요일</td></tr>
+<tr><td>투자전략팀</td><td class="cycle">매주 목요일</td></tr>
+<tr><td>투자팀</td><td class="cycle">매주 목요일~금요일</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details>
+<!-- DASHBOARD -->
+<div class="dashboard-wrap" id="view-dashboard">
+<div class="dash-team-grid" id="dash-team-grid"></div>
+<div class="dash-bottom-grid" id="dash-bottom-grid"></div>
+</div>
+<!-- TABLE VIEW -->
+<div id="view-table" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+<!-- 선택 삭제 툴바 -->
+<div class="sel-toolbar" id="sel-toolbar">
+<span class="sel-count" id="sel-count">0건 선택됨</span>
+<button class="btn-del-sel" onclick="deleteSelected()">🗑 선택 삭제</button>
+<button class="btn-cancel-sel" onclick="clearSelection()">취소</button>
+</div>
+<!-- FILTERS -->
+<div class="filter-bar">
+<div class="search-wrap">
+<span class="search-icon">🔍</span>
+<input class="search-input" id="search-input" oninput="applyFilters()" placeholder="기업명, GP명 검색..."/>
+</div>
+<div class="ms-wrap" id="ms-gp">
+<div class="ms-btn" id="ms-gp-btn" onclick="toggleMs('gp')"><span id="ms-gp-label">전체 GP</span></div>
+<div class="ms-dropdown">
+<div class="ms-search"><input oninput="filterMsItems('gp',this.value)" placeholder="GP 검색..." type="text"/></div>
+<div id="ms-gp-items"></div>
+<span class="ms-clear" onclick="clearMs('gp')">선택 초기화</span>
+</div>
+</div>
+<select class="filter-select" id="filter-link" onchange="applyFilters()">
+<option value="">보고서 상태 전체</option>
+<option value="submitted">제출완료</option>
+<option value="missing">미제출</option>
+</select>
+<div class="ms-wrap" id="ms-val">
+<div class="ms-btn" id="ms-val-btn" onclick="toggleMs('val')"><span id="ms-val-label">기업가치 전체</span></div>
+<div class="ms-dropdown">
+<div id="ms-val-items">
+<div class="ms-item"><input id="val-0-150" onchange="applyFilters()" type="checkbox" value="0_150"/><label for="val-0-150">기업가치 0~150억원 해당</label></div>
+<div class="ms-item"><input id="val-150-360" onchange="applyFilters()" type="checkbox" value="150_360"/><label for="val-150-360">기업가치 150~360억원 해당</label></div>
+</div>
+<span class="ms-clear" onclick="clearMs('val')">선택 초기화</span>
+</div>
+</div>
+<select class="filter-select" id="filter-confirmed" onchange="applyFilters()">
+<option value="">확인 여부</option>
+<option value="done">확인 완료</option>
+<option value="pending">미확인</option>
+</select>
+<select class="filter-select" id="filter-intention" onchange="applyFilters()">
+<option value="">검토 의향 전체</option>
+<option value="투자검토진행중">투자검토진행중</option>
+<option value="기업가치 초과">기업가치 초과</option>
+<option value="투자완료">투자완료</option>
+<option value="동일기업 검토완료">동일기업 검토완료</option>
+</select>
+<div class="ms-wrap" id="ms-domain">
+<div class="ms-btn" id="ms-domain-btn" onclick="toggleMs('domain')"><span id="ms-domain-label">투자도메인 전체</span></div>
+<div class="ms-dropdown">
+<div id="ms-domain-items"></div>
+<span class="ms-clear" onclick="clearMs('domain')">선택 초기화</span>
+</div>
+</div>
+<!-- 담당자배정 멀티셀렉트 -->
+<div class="ms-wrap" id="ms-assignee">
+<div class="ms-btn" id="ms-assignee-btn" onclick="toggleMs('assignee')"><span id="ms-assignee-label">담당자 전체</span></div>
+<div class="ms-dropdown">
+<div class="ms-search"><input oninput="filterMsItems('assignee',this.value)" placeholder="담당자 검색..." type="text"/></div>
+<div id="ms-assignee-items"></div>
+<span class="ms-clear" onclick="clearMs('assignee')">선택 초기화</span>
+</div>
+</div>
+<div class="ms-wrap" id="ms-cols">
+<div class="ms-btn" id="ms-cols-btn" onclick="toggleMs('cols')" style="background:var(--bg3)"><span>📋 열 표시 설정</span></div>
+<div class="ms-dropdown col-settings-drop">
+<div class="col-settings-header">보고 싶은 열을 선택하세요</div>
+<div id="ms-cols-items"></div>
+<span class="ms-clear" onclick="selectAllCols()">모두 표시</span>
+</div>
+</div>
+<button class="filter-btn" id="btn-batch" onclick="toggleFilter('batch')">배치 신청</button>
+<button class="filter-btn" id="btn-direct" onclick="toggleFilter('direct')">직접투자</button>
+<button class="filter-btn" onclick="clearFilters()" style="color:var(--danger)">필터 초기화</button>
+<div class="filter-count" id="filter-count"></div>
+</div>
+<!-- TABLE -->
+<div class="table-wrap" id="table-wrap">
+<table id="main-table">
+<thead><tr id="thead-row">
+<th data-col="chk" onclick="event.stopPropagation()" style="width:36px;cursor:default">
+<input id="chk-all" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--orange);cursor:pointer;" type="checkbox"/>
+<div class="col-resizer"></div>
+</th>
+<th data-col="no" onclick="sortBy('no')" style="width:50px">No. <span class="sort-arrow" id="sa-no">↕</span><div class="col-resizer"></div></th>
+<th data-col="company" onclick="sortBy('company')" style="width:140px">투자기업명 <span class="sort-arrow" id="sa-company">↕</span><div class="col-resizer"></div></th>
+<th data-col="gp" onclick="sortBy('gp')" style="width:130px">GP명 <span class="sort-arrow" id="sa-gp">↕</span><div class="col-resizer"></div></th>
+<th data-col="reviewer" style="width:120px">담당심사역<div class="col-resizer"></div></th>
+<th data-col="fund" onclick="sortBy('fund')" style="width:160px">펀드명 <span class="sort-arrow" id="sa-fund">↕</span><div class="col-resizer"></div></th>
+<th data-col="biz_no" style="width:120px">사업자등록번호<div class="col-resizer"></div></th>
+<th data-col="industry" style="width:130px">업종(표준산업)<div class="col-resizer"></div></th>
+<th data-col="biz" style="width:200px">주요사업<div class="col-resizer"></div></th>
+<th data-col="inv_amt" onclick="sortBy('inv_amt')" style="width:90px;text-align:right">투자금액(억원) <span class="sort-arrow" id="sa-inv_amt">↕</span><div class="col-resizer"></div></th>
+<th data-col="inv_date" onclick="sortBy('inv_date')" style="width:100px">투자일자 <span class="sort-arrow" id="sa-inv_date">↕</span><div class="col-resizer"></div></th>
+<th data-col="inv_date_type" style="width:120px">투자일자기준<div class="col-resizer"></div></th>
+<th data-col="pre" style="width:80px;text-align:right">Pre(억원)<div class="col-resizer"></div></th>
+<th data-col="post" style="width:80px;text-align:right">Post(억원)<div class="col-resizer"></div></th>
+<th data-col="val_type" style="width:100px">밸류기준<div class="col-resizer"></div></th>
+<th data-col="link" style="width:90px">보고서<div class="col-resizer"></div></th>
+<th data-col="batch_cnt" style="width:80px">배치신청횟수<div class="col-resizer"></div></th>
+<th data-col="batch_sel" style="width:80px">배치선정기수<div class="col-resizer"></div></th>
+<th data-col="batch_route" style="width:130px">배치지원루트<div class="col-resizer"></div></th>
+<th data-col="direct" style="width:100px">TYPE1(직접투자)<div class="col-resizer"></div></th>
+<th data-col="direct_date" style="width:100px">직접투자일자<div class="col-resizer"></div></th>
+<th data-col="domain" style="width:150px">디캠프 투자도메인<div class="col-resizer"></div></th>
+<th data-col="val_0_150" style="width:110px">기업가치 0~150억원<div class="col-resizer"></div></th>
+<th data-col="val_150_360" style="width:120px">기업가치 150~360억원<div class="col-resizer"></div></th>
+<th data-col="confirmed" style="width:80px">자료확인여부<div class="col-resizer"></div></th>
+<th data-col="confirmer" style="width:80px">확인자<div class="col-resizer"></div></th>
+<th data-col="confirm_date" style="width:90px">확인일자<div class="col-resizer"></div></th>
+<th data-col="intention" style="width:100px">검토의향<div class="col-resizer"></div></th>
+<th data-col="reason" style="width:100px">사유<div class="col-resizer"></div></th>
+<th data-col="note" style="width:80px">비고<div class="col-resizer"></div></th>
+<th data-col="inv_point" style="width:80px">투자포인트<div class="col-resizer"></div></th>
+<th data-col="risk_point" style="width:80px">주요리스크<div class="col-resizer"></div></th>
+<th data-col="assignee" style="width:100px">담당자배정<div class="col-resizer"></div></th>
+</tr></thead>
+<tbody id="table-body"></tbody>
+</table>
+<div class="empty-state" id="empty-state" style="display:none;">
+<div class="icon">🔍</div><p>검색 결과가 없습니다.</p>
+</div>
+</div>
+<div class="pagination" id="pagination"></div>
+</div>
+<div id="view-briefing" style="display:none;flex:1;overflow-y:auto;padding:24px;background:var(--bg);">
+<div class="brief-header">
+<div class="brief-title">📄 주간 투자 검토 브리핑 생성</div>
+<div class="brief-sub">기간을 선택하면 해당 기간 기업이 자동 분류됩니다. 확인·수정 후 Word 파일로 다운로드하세요.</div>
+<div class="brief-period-row">
+<span class="brief-period-label">보고 기간</span>
+<input class="brief-date-input" id="brief-start" type="date"/>
+<span style="color:var(--text3);font-size:12px">~</span>
+<input class="brief-date-input" id="brief-end" type="date"/>
+<button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
+</div>
+<div class="brief-comment-area" id="brief-comment-area" style="display:none;">
+<div class="brief-comment-label">📝 주간 총평 (PART 1 작성자 코멘트)</div>
+<textarea class="brief-comment-input" id="brief-weekly-comment" placeholder="이번 주 전반적인 특징 또는 주목할 점을 3~5줄로 요약해주세요."></textarea>
+</div>
+</div>
+<div id="brief-summary-bar-wrap"></div>
+<div class="brief-download-bar" id="brief-download-bar" style="display:none;">
+<button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()">⬇️ Word 브리핑 다운로드</button>
+</div>
+<div id="brief-body"></div>
+</div></div>
 <!-- DETAIL MODAL -->
-<div class="modal-overlay" id="detail-modal" style="display:none;" onclick="if(event.target===this)closeModal('detail-modal')">
-  <div class="modal wide">
-    <div class="modal-header">
-      <div class="modal-title" id="detail-modal-title">기업 상세</div>
-      <button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
-    </div>
-    <div class="modal-body" id="detail-modal-body"></div>
-    <div class="modal-footer" id="detail-modal-footer"></div>
-  </div>
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeModal('detail-modal')" style="display:none;">
+<div class="modal wide">
+<div class="modal-header">
+<div class="modal-title" id="detail-modal-title">기업 상세</div>
+<button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
 </div>
-
+<div class="modal-body" id="detail-modal-body"></div>
+<div class="modal-footer" id="detail-modal-footer"></div>
+</div>
+</div>
 <!-- ADD/EDIT MODAL -->
-<div class="modal-overlay" id="add-modal" style="display:none;" onclick="if(event.target===this)closeModal('add-modal')">
-  <div class="modal wide">
-    <div class="modal-header">
-      <div class="modal-title" id="add-modal-title">새 항목 추가</div>
-      <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
-    </div>
-    <div class="modal-body" id="add-modal-body"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('add-modal')">취소</button>
-      <button class="btn btn-primary" onclick="saveNewItem()">저장</button>
-    </div>
-  </div>
-
-<div id="toast"></div>
-
-  <!-- BRIEFING VIEW -->
-  <div id="view-briefing" style="display:none;flex:1;overflow-y:auto;padding:24px;background:var(--bg);">
-    <div class="brief-header">
-      <div class="brief-title">📄 주간 투자 검토 브리핑 생성</div>
-      <div class="brief-sub">기간을 선택하면 해당 기간 기업이 자동 분류됩니다. 확인·수정 후 Word 파일로 다운로드하세요.</div>
-      <div class="brief-period-row">
-        <span class="brief-period-label">보고 기간</span>
-        <input type="date" class="brief-date-input" id="brief-start">
-        <span style="color:var(--text3);font-size:12px">~</span>
-        <input type="date" class="brief-date-input" id="brief-end">
-        <button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
-      </div>
-      <div class="brief-comment-area" id="brief-comment-area" style="display:none;">
-        <div class="brief-comment-label">📝 주간 총평 (PART 1 작성자 코멘트)</div>
-        <textarea class="brief-comment-input" id="brief-weekly-comment" placeholder="이번 주 전반적인 특징 또는 주목할 점을 3~5줄로 요약해주세요."></textarea>
-      </div>
-    </div>
-    <div id="brief-summary-bar-wrap"></div>
-    <div id="brief-download-bar" style="display:none;" class="brief-download-bar">
-      <button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()">⬇️ Word 브리핑 다운로드</button>
-    </div>
-    <div id="brief-body"></div>
-  </div>
-
-  <!-- BRIEFING AUTH MODAL -->
-  <div class="modal-overlay" id="brief-auth-modal" style="display:none;">
-    <div class="modal" style="width:400px;">
-      <div class="modal-header">
-        <div class="modal-title">🔒 브리핑 전용 인증</div>
-        <button class="modal-close" onclick="document.getElementById('brief-auth-modal').style.display='none'">✕</button>
-      </div>
-      <div class="modal-body" style="padding:24px;">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">주간 브리핑 기능은 담당자 전용입니다.</div>
-        <label class="form-label" style="display:block;margin-bottom:6px;">추가 비밀번호</label>
-        <input class="form-input" type="password" id="brief-pw-input" placeholder="비밀번호 입력"
-          onkeydown="if(event.key==='Enter')tryBriefingAuth()" style="width:100%;">
-        <div style="color:var(--danger);font-size:12px;margin-top:8px;display:none;" id="brief-pw-err">비밀번호가 올바르지 않습니다.</div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="document.getElementById('brief-auth-modal').style.display='none'">취소</button>
-        <button class="btn btn-primary" onclick="tryBriefingAuth()">확인</button>
-      </div>
-    </div>
-  </div>
-
+<div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeModal('add-modal')" style="display:none;">
+<div class="modal wide">
+<div class="modal-header">
+<div class="modal-title" id="add-modal-title">새 항목 추가</div>
+<button class="modal-close" onclick="closeModal('add-modal')">✕</button>
 </div>
+<div class="modal-body" id="add-modal-body"></div>
+<div class="modal-footer">
+<button class="btn btn-ghost" onclick="closeModal('add-modal')">취소</button>
+<button class="btn btn-primary" onclick="saveNewItem()">저장</button>
+</div>
+</div>
+</div>
+<div id="toast"></div>
+<!-- BRIEFING VIEW -->
+
+<!-- BRIEFING AUTH MODAL -->
+<div class="modal-overlay" id="brief-auth-modal" style="display:none;">
+<div class="modal" style="width:400px;">
+<div class="modal-header">
+<div class="modal-title">🔒 브리핑 전용 인증</div>
+<button class="modal-close" onclick="document.getElementById('brief-auth-modal').style.display='none'">✕</button>
+</div>
+<div class="modal-body" style="padding:24px;">
+<div style="font-size:12px;color:var(--text2);margin-bottom:16px;">주간 브리핑 기능은 담당자 전용입니다.</div>
+<label class="form-label" style="display:block;margin-bottom:6px;">추가 비밀번호</label>
+<input class="form-input" id="brief-pw-input" onkeydown="if(event.key==='Enter')tryBriefingAuth()" placeholder="비밀번호 입력" style="width:100%;" type="password"/>
+<div id="brief-pw-err" style="color:var(--danger);font-size:12px;margin-top:8px;display:none;">비밀번호가 올바르지 않습니다.</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-ghost" onclick="document.getElementById('brief-auth-modal').style.display='none'">취소</button>
+<button class="btn btn-primary" onclick="tryBriefingAuth()">확인</button>
+</div>
+</div>
+</div>
+
 <script>
 const PASS='dcamp2026';
 const STORAGE_KEY='dangel_fund_data_v3';
@@ -1610,8 +1599,13 @@ const BRIEF_PASS = 'dcamp2026brief'; // 브리핑 전용 비밀번호
 
 // 브리핑 탭 클릭 시 인증 모달 표시
 function openBriefingAuth(){
+  console.log('[Briefing] 인증 모달 열기 시도');
   const el = document.getElementById('brief-auth-modal');
-  if(!el) return;
+  if(!el){
+    console.error('[Briefing] brief-auth-modal 요소를 찾을 수 없음. HTML 로드 확인 필요.');
+    alert('브리핑 모달을 찾을 수 없습니다. 페이지를 강력 새로고침(Ctrl+Shift+R) 해주세요.');
+    return;
+  }
   el.style.display = 'flex';
   const pwInput = document.getElementById('brief-pw-input');
   const pwErr = document.getElementById('brief-pw-err');

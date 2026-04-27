@@ -278,7 +278,7 @@
   .brief-card-gp{font-size:12px;color:var(--text3);}
   .brief-card-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
   .brief-meta-tag{font-size:11px;padding:2px 8px;border-radius:2px;background:var(--bg3);color:var(--text2);}
-  .brief-fields{display:grid;grid-template-columns:100px 1fr;gap:0;font-size:12px;margin-bottom:12px;border:1px solid var(--border);border-radius:2px;overflow:hidden;}
+  
   .brief-field-label{background:var(--bg3);padding:8px 12px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);}
   .brief-field-val{padding:8px 12px;color:var(--text);border-bottom:1px solid var(--border);white-space:pre-wrap;word-break:break-word;line-height:1.6;}
   .brief-field-label:last-of-type,.brief-field-val:last-of-type{border-bottom:none;}
@@ -372,7 +372,7 @@
   .brief-detail-btn-mini:hover{border-color:var(--orange);color:var(--orange);}
 
   /* 카드 편집 영역 */
-  .brief-edit-grid{display:grid;grid-template-columns:200px 1fr 160px;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .brief-edit-grid{display:grid;grid-template-columns:180px 1fr 140px 110px;gap:10px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);align-items:end;}
   .brief-edit-item{display:flex;flex-direction:column;gap:4px;}
   .brief-edit-item.brief-edit-wide{grid-column:auto;}
   .brief-edit-label{font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.5px;text-transform:uppercase;}
@@ -381,6 +381,23 @@
   .brief-card-save-btn:disabled{opacity:.5;cursor:wait;}
   .brief-card-save-btn.modified{background:var(--orange);color:#fff;}
   .brief-card-save-btn.saved{background:var(--success);border-color:var(--success);color:#fff;}
+
+  .brief-card{min-width:0;overflow:hidden;}
+  .brief-card-meta{min-width:0;}
+  .brief-edit-item{min-width:0;}
+  .brief-edit-save .brief-card-save-btn{width:100%;padding:7px 8px;font-size:11px;height:32px;line-height:1;}
+  /* 배지 (배치선정/직접투자) */
+  .brief-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;letter-spacing:.2px;}
+  .brief-badge-batch-sel{background:rgba(26,158,87,.12);color:var(--success);border:1px solid rgba(26,158,87,.35);}
+  .brief-badge-batch-app{background:rgba(255,94,39,.10);color:var(--orange);border:1px solid rgba(255,94,39,.35);}
+  .brief-badge-direct{background:rgba(79,127,255,.12);color:#3a6fd8;border:1px solid rgba(79,127,255,.35);}
+  /* 검토불필요 표에도 배지 */
+  .brief-skip-table .brief-badge{margin-left:4px;}
+
+  /* 긴 텍스트 줄바꿈 보강 */
+  .brief-field-val{word-break:keep-all;overflow-wrap:break-word;}
+  .brief-card-name{flex-shrink:0;}
+  .brief-card-top{flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -1793,17 +1810,21 @@ function renderBriefingBody(start, end, total){
         <table class="brief-skip-table">
           <thead><tr><th>No.</th><th>기업명</th><th>GP명</th><th>Pre(억원)</th><th>도메인</th><th>제외 사유</th></tr></thead>
           <tbody>
-            ${r.map((item,i) => `<tr>
+            ${r.map((item,i) => {
+              const bSel = item['배치선정 기수'] ? `<span class="brief-badge brief-badge-batch-sel">🎯 ${item['배치선정 기수']}기</span>` : '';
+              const bApp = !item['배치선정 기수'] && item['배치신청횟수'] ? `<span class="brief-badge brief-badge-batch-app">📩 ${item['배치신청횟수']}회</span>` : '';
+              const dir = item['직접투자 여부 (O/X)']==='O' ? `<span class="brief-badge brief-badge-direct">💼 직접</span>` : '';
+              return `<tr>
               <td>${item['No.']||'-'}</td>
               <td style="font-weight:600;color:var(--text)">
-                ${esc(item['투자기업명']||'-')}
+                ${esc(item['투자기업명']||'-')}${bSel}${bApp}${dir}
                 <button class="brief-detail-btn-mini" onclick="openBriefDetail('${item['No.']||''}')" title="상세 보기">🔍</button>
               </td>
               <td style="color:var(--text2)">${esc(item['GP명']||'-')}</td>
               <td style="text-align:right">${item['기업가치(Pre, 억원)']||'-'}</td>
               <td>${esc(item['디캠프 기준 산업분류']||'-')}</td>
               <td><input class="brief-reason-input" id="br-reason-red-${i}" value="${esc(item['사유']||item['투자검토진행 의향']||'')}" placeholder="사유 입력" style="width:100%" oninput="markBriefReasonModified('red',${i})"></td>
-            </tr>`).join('')}
+            </tr>`}).join('')}
           </tbody>
         </table>
       </div>
@@ -1829,12 +1850,20 @@ function briefCard(item, cls, i){
   const currentReason = item['사유'] || '';
   const currentAssignee = item['담당자배정'] || '';
 
+  const batchSel = item['배치선정 기수'] ? String(item['배치선정 기수']).trim() : '';
+  const batchApp = item['배치신청횟수'] ? String(item['배치신청횟수']).trim() : '';
+  const isDirect = item['직접투자 여부 (O/X)'] === 'O';
+  const badges = [];
+  if(batchSel) badges.push(`<span class="brief-badge brief-badge-batch-sel">🎯 배치선정 ${batchSel}기</span>`);
+  else if(batchApp) badges.push(`<span class="brief-badge brief-badge-batch-app">📩 배치신청 ${batchApp}회</span>`);
+  if(isDirect) badges.push(`<span class="brief-badge brief-badge-direct">💼 직접투자</span>`);
+
   return `<div class="brief-card" id="brief-card-${cls}-${i}">
     <div class="brief-card-top">
       <div class="brief-card-name">No.${item['No.']||'?'} ${esc(item['투자기업명']||'-')}</div>
+      ${badges.join(' ')}
       <div class="brief-card-gp">| ${esc(item['GP명']||'-')}</div>
       <button class="brief-detail-btn" onclick="openBriefDetail('${item['No.']||''}')" title="상세 정보 보기">🔍 상세</button>
-      <button class="brief-card-save-btn" id="brief-card-save-${cls}-${i}" onclick="saveBriefCardToSheet('${cls}',${i})" title="이 기업 정보를 시트에 저장">💾 저장</button>
     </div>
     <div class="brief-card-meta">
       <span class="brief-meta-tag">Pre ${pre}억원</span>
@@ -1867,6 +1896,10 @@ function briefCard(item, cls, i){
       <div class="brief-edit-item">
         <label class="brief-edit-label">담당자배정</label>
         <input class="brief-reason-input" id="br-assignee-${cls}-${i}" value="${esc(currentAssignee)}" placeholder="담당자명" oninput="markBriefModified('${cls}',${i})">
+      </div>
+      <div class="brief-edit-item brief-edit-save">
+        <label class="brief-edit-label">&nbsp;</label>
+        <button class="brief-card-save-btn" id="brief-card-save-${cls}-${i}" onclick="saveBriefCardToSheet('${cls}',${i})" title="이 기업 정보를 시트에 저장">💾 시트 저장</button>
       </div>
     </div>
   </div>`;
@@ -2144,11 +2177,19 @@ async function downloadBriefingWord(){
     ]});
 
     const assignee = item._finalAssignee || item['담당자배정'] || '-';
+    // 배치/직접투자 상태 텍스트
+    const batchStatus = [];
+    if(item['배치선정 기수']) batchStatus.push(`🎯 배치선정 ${item['배치선정 기수']}기`);
+    else if(item['배치신청횟수']) batchStatus.push(`📩 배치신청 ${item['배치신청횟수']}회`);
+    if(item['직접투자 여부 (O/X)']==='O') batchStatus.push(`💼 직접투자 대상`);
+    const batchText = batchStatus.length ? batchStatus.join(' / ') : '해당 없음';
+
     const dataRows = [
       ['주요 사업', biz],
       ['기업가치(Pre)', `${pre}억원  (구간: ${valTag})`],
       ['투자금액', `${invAmt}억원`],
       ['디캠프 도메인', domain],
+      ['배치/직접투자', batchText],
       ['담당자배정', assignee],
     ].map(([label, val]) => new TableRow({children:[
       cell(label,{bg:GRAY_BG,width:1800,bold:true}),

@@ -681,8 +681,12 @@ function switchView(v){
   currentView=v;
   document.getElementById('view-dashboard').style.display=v==='dashboard'?'block':'none';
   document.getElementById('view-table').style.display=v==='table'?'flex':'none';
+  const bv=document.getElementById('view-briefing');
+  if(bv) bv.style.display=v==='briefing'?'flex':'none';
   document.getElementById('tab-dashboard').classList.toggle('active',v==='dashboard');
   document.getElementById('tab-table').classList.toggle('active',v==='table');
+  const tb=document.getElementById('tab-briefing');
+  if(tb) tb.classList.toggle('active',v==='briefing');
   if(v==='dashboard') renderDashboard();
 }
 
@@ -949,8 +953,13 @@ function sortBy(f){
 function sortData(){
   const fm={no:'No.',company:'투자기업명',gp:'GP명',fund:'펀드명',inv_amt:'투자금액(억원)',inv_date:'투자일자'};
   const f=fm[sortField]||'No.';
+  const dateFields=new Set(['투자일자']);
   filteredData.sort((a,b)=>{
     let va=a[f]||'',vb=b[f]||'';
+    if(dateFields.has(f)){
+      const da=va?new Date(va):new Date(0),db=vb?new Date(vb):new Date(0);
+      return sortAsc?da-db:db-da;
+    }
     if(!isNaN(parseFloat(va))&&!isNaN(parseFloat(vb))) return sortAsc?parseFloat(va)-parseFloat(vb):parseFloat(vb)-parseFloat(va);
     return sortAsc?String(va).localeCompare(String(vb),'ko'):String(vb).localeCompare(String(va),'ko');
   });
@@ -1542,24 +1551,7 @@ function fmtDateKR(str){
   return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// 기존 switchView 확장 (briefing 뷰 추가)
-const _origSwitchView = switchView;
-function switchView(v){
-  if(v === 'briefing'){
-    currentView = v;
-    document.getElementById('view-dashboard').style.display = 'none';
-    document.getElementById('view-table').style.display = 'none';
-    const bv = document.getElementById('view-briefing');
-    bv.style.display = 'flex';
-    document.getElementById('tab-dashboard').classList.remove('active');
-    document.getElementById('tab-table').classList.remove('active');
-    document.getElementById('tab-briefing').classList.add('active');
-  } else {
-    document.getElementById('view-briefing').style.display = 'none';
-    document.getElementById('tab-briefing').classList.remove('active');
-    _origSwitchView(v);
-  }
-}
+// switchView는 기존 함수에 통합됨
 
 // 브리핑 상태
 let briefData = { green:[], yellow:[], red:[] };

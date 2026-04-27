@@ -623,7 +623,6 @@
     </div>
   </div>
 
-</div>
 <script>
 const PASS='dcamp2026';
 const STORAGE_KEY='dangel_fund_data_v3';
@@ -1611,13 +1610,8 @@ const BRIEF_PASS = 'dcamp2026brief'; // 브리핑 전용 비밀번호
 
 // 브리핑 탭 클릭 시 인증 모달 표시
 function openBriefingAuth(){
-  console.log('[Briefing] 인증 모달 열기 시도');
   const el = document.getElementById('brief-auth-modal');
-  if(!el){
-    console.error('[Briefing] brief-auth-modal 요소를 찾을 수 없음. HTML 로드 확인 필요.');
-    alert('브리핑 모달을 찾을 수 없습니다. 페이지를 강력 새로고침(Ctrl+Shift+R) 해주세요.');
-    return;
-  }
+  if(!el) return;
   el.style.display = 'flex';
   const pwInput = document.getElementById('brief-pw-input');
   const pwErr = document.getElementById('brief-pw-err');

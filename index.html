@@ -294,6 +294,60 @@
   .brief-dl-btn:hover{background:var(--orange-dk);}
   /* Auth modal */
   #brief-auth-modal .modal{width:400px;}
+
+  /* ── BRIEFING ─────────────────────────── */
+  .brief-header{background:var(--white);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:2px;padding:24px;margin-bottom:20px;}
+  .brief-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .brief-sub{font-size:12px;color:var(--text3);margin-bottom:20px;}
+  .brief-period-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .brief-period-label{font-size:12px;font-weight:600;color:var(--text2);white-space:nowrap;}
+  .brief-date-input{padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:12px;outline:none;font-family:inherit;}
+  .brief-date-input:focus{border-color:var(--orange);}
+  .brief-load-btn{padding:8px 18px;background:var(--orange);border:none;border-radius:2px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .brief-load-btn:hover{background:var(--orange-dk);}
+  .brief-comment-area{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+  .brief-comment-label{font-size:11px;font-weight:700;color:var(--orange);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+  .brief-comment-input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:12px;outline:none;font-family:inherit;min-height:80px;resize:vertical;line-height:1.6;}
+  .brief-comment-input:focus{border-color:var(--orange);}
+  .brief-summary-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .brief-chip{background:var(--white);border:1px solid var(--border);border-radius:2px;padding:12px 20px;display:flex;flex-direction:column;gap:2px;min-width:120px;}
+  .brief-chip-num{font-size:24px;font-weight:700;font-family:'Poppins',sans-serif;line-height:1;}
+  .brief-chip-num.green{color:var(--success);}
+  .brief-chip-num.yellow{color:var(--warn);}
+  .brief-chip-num.red{color:var(--danger);}
+  .brief-chip-label{font-size:11px;color:var(--text3);margin-top:2px;}
+  .brief-section{background:var(--white);border:1px solid var(--border);border-radius:2px;margin-bottom:16px;overflow:hidden;}
+  .brief-section-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .brief-section-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:2px;}
+  .brief-badge-green{background:rgba(26,158,87,.12);color:var(--success);}
+  .brief-badge-yellow{background:rgba(200,120,0,.12);color:var(--warn);}
+  .brief-badge-red{background:rgba(214,48,48,.10);color:var(--danger);}
+  .brief-section-title{font-size:13px;font-weight:600;color:var(--text);}
+  .brief-section-count{font-size:11px;color:var(--text3);margin-left:auto;}
+  .brief-card{border-bottom:1px solid var(--border);padding:16px 20px;}
+  .brief-card:last-child{border-bottom:none;}
+  .brief-card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .brief-card-name{font-size:14px;font-weight:700;color:var(--orange);}
+  .brief-card-gp{font-size:12px;color:var(--text3);}
+  .brief-card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .brief-meta-tag{font-size:11px;padding:2px 8px;border-radius:2px;background:var(--bg3);color:var(--text2);}
+  .brief-fields{font-size:12px;margin-bottom:12px;border:1px solid var(--border);border-radius:2px;overflow:hidden;}
+  .brief-field-row{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid var(--border);}
+  .brief-field-row:last-child{border-bottom:none;}
+  .brief-field-label{background:var(--bg3);padding:8px 12px;font-weight:600;color:var(--text2);font-size:11px;}
+  .brief-field-val{padding:8px 12px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.6;}
+  .brief-intention-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .brief-intention-label{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;}
+  .brief-intention-sel{padding:6px 24px 6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:12px;outline:none;cursor:pointer;font-family:inherit;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23948F8D'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+  .brief-reason-input{flex:1;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:12px;outline:none;font-family:inherit;min-width:200px;}
+  .brief-reason-input:focus,.brief-intention-sel:focus{border-color:var(--orange);}
+  .brief-skip-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .brief-skip-table th{background:var(--bg3);padding:8px 12px;text-align:left;font-weight:600;color:var(--text2);border:1px solid var(--border);}
+  .brief-skip-table td{padding:8px 12px;border:1px solid var(--border);color:var(--text);vertical-align:top;}
+  .brief-download-bar{display:flex;justify-content:flex-end;padding:0 0 8px;}
+  .brief-dl-btn{padding:10px 28px;background:var(--orange);border:none;border-radius:2px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .brief-dl-btn:hover{background:var(--orange-dk);}
+  .brief-dl-btn:disabled{opacity:.5;cursor:wait;}
 </style>
 </head>
 <body>
@@ -452,7 +506,7 @@
             <input type="checkbox" id="chk-all" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--orange);cursor:pointer;">
             <div class="col-resizer"></div>
           </th>
-          <th data-col="no" style="width:50px">No.<div class="col-resizer"></div></th>
+          <th data-col="no" onclick="sortBy('no')" style="width:50px">No. <span class="sort-arrow" id="sa-no">↕</span><div class="col-resizer"></div></th>
           <th data-col="company" onclick="sortBy('company')" style="width:140px">투자기업명 <span class="sort-arrow" id="sa-company">↕</span><div class="col-resizer"></div></th>
           <th data-col="gp" onclick="sortBy('gp')" style="width:130px">GP명 <span class="sort-arrow" id="sa-gp">↕</span><div class="col-resizer"></div></th>
           <th data-col="reviewer" style="width:120px">담당심사역<div class="col-resizer"></div></th>
@@ -1955,6 +2009,53 @@ async function downloadBriefingWord(){
   showToast('✅ 브리핑 파일 다운로드 완료', true);
 }
 
+
 </script>
+
+  <!-- BRIEFING VIEW -->
+  <div id="view-briefing" style="display:none;flex:1;overflow-y:auto;padding:24px;background:var(--bg);">
+    <div class="brief-header">
+      <div class="brief-title">📄 주간 투자 검토 브리핑 생성</div>
+      <div class="brief-sub">기간을 선택하면 해당 기간 기업이 자동 분류됩니다. 확인·수정 후 Word 파일로 다운로드하세요.</div>
+      <div class="brief-period-row">
+        <span class="brief-period-label">보고 기간</span>
+        <input type="date" class="brief-date-input" id="brief-start">
+        <span style="color:var(--text3);font-size:12px">~</span>
+        <input type="date" class="brief-date-input" id="brief-end">
+        <button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
+      </div>
+      <div class="brief-comment-area" id="brief-comment-area" style="display:none;">
+        <div class="brief-comment-label">📝 주간 총평 (PART 1 작성자 코멘트)</div>
+        <textarea class="brief-comment-input" id="brief-weekly-comment" placeholder="이번 주 전반적인 특징 또는 주목할 점을 3~5줄로 요약해주세요."></textarea>
+      </div>
+    </div>
+    <div id="brief-summary-bar-wrap"></div>
+    <div id="brief-download-bar" style="display:none;" class="brief-download-bar">
+      <button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()">⬇️ Word 브리핑 다운로드</button>
+    </div>
+    <div id="brief-body"></div>
+  </div>
+
+  <!-- BRIEFING AUTH MODAL -->
+  <div class="modal-overlay" id="brief-auth-modal" style="display:none;">
+    <div class="modal" style="width:400px;">
+      <div class="modal-header">
+        <div class="modal-title">🔒 브리핑 전용 인증</div>
+        <button class="modal-close" onclick="document.getElementById('brief-auth-modal').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">주간 브리핑 기능은 담당자 전용입니다.</div>
+        <label class="form-label" style="display:block;margin-bottom:6px;">추가 비밀번호</label>
+        <input class="form-input" type="password" id="brief-pw-input" placeholder="비밀번호 입력"
+          onkeydown="if(event.key==='Enter')tryBriefingAuth()" style="width:100%;">
+        <div style="color:var(--danger);font-size:12px;margin-top:8px;display:none;" id="brief-pw-err">비밀번호가 올바르지 않습니다.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="document.getElementById('brief-auth-modal').style.display='none'">취소</button>
+        <button class="btn btn-primary" onclick="tryBriefingAuth()">확인</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

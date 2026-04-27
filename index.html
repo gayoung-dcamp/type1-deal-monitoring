@@ -576,8 +576,54 @@
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast">
 
+<!-- BRIEFING VIEW -->
+  <div id="view-briefing" style="display:none;flex:1;overflow-y:auto;padding:24px;background:var(--bg);">
+    <div class="brief-header">
+      <div class="brief-title">📄 주간 투자 검토 브리핑 생성</div>
+      <div class="brief-sub">기간을 선택하면 해당 기간 기업이 자동 분류됩니다. 확인·수정 후 Word 파일로 다운로드하세요.</div>
+      <div class="brief-period-row">
+        <span class="brief-period-label">보고 기간</span>
+        <input type="date" class="brief-date-input" id="brief-start">
+        <span style="color:var(--text3);font-size:12px">~</span>
+        <input type="date" class="brief-date-input" id="brief-end">
+        <button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
+      </div>
+      <div class="brief-comment-area" id="brief-comment-area" style="display:none;">
+        <div class="brief-comment-label">📝 주간 총평 (PART 1 작성자 코멘트)</div>
+        <textarea class="brief-comment-input" id="brief-weekly-comment" placeholder="이번 주 전반적인 특징 또는 주목할 점을 3~5줄로 요약해주세요."></textarea>
+      </div>
+    </div>
+    <div id="brief-summary-bar-wrap"></div>
+    <div id="brief-download-bar" style="display:none;" class="brief-download-bar">
+      <button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()">⬇️ Word 브리핑 다운로드</button>
+    </div>
+    <div id="brief-body"></div>
+  </div>
+
+  <!-- BRIEFING AUTH MODAL -->
+  <div class="modal-overlay" id="brief-auth-modal" style="display:none;">
+    <div class="modal" style="width:400px;">
+      <div class="modal-header">
+        <div class="modal-title">🔒 브리핑 전용 인증</div>
+        <button class="modal-close" onclick="document.getElementById('brief-auth-modal').style.display='none'">✕</button>
+      </div>
+      <div class="modal-body" style="padding:24px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">주간 브리핑 기능은 담당자 전용입니다.</div>
+        <label class="form-label" style="display:block;margin-bottom:6px;">추가 비밀번호</label>
+        <input class="form-input" type="password" id="brief-pw-input" placeholder="비밀번호 입력"
+          onkeydown="if(event.key==='Enter')tryBriefingAuth()" style="width:100%;">
+        <div style="color:var(--danger);font-size:12px;margin-top:8px;display:none;" id="brief-pw-err">비밀번호가 올바르지 않습니다.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="document.getElementById('brief-auth-modal').style.display='none'">취소</button>
+        <button class="btn btn-primary" onclick="tryBriefingAuth()">확인</button>
+      </div>
+    </div>
+  </div>
+
+</div>
 <script>
 const PASS='dcamp2026';
 const STORAGE_KEY='dangel_fund_data_v3';
@@ -2011,51 +2057,5 @@ async function downloadBriefingWord(){
 
 
 </script>
-
-  <!-- BRIEFING VIEW -->
-  <div id="view-briefing" style="display:none;flex:1;overflow-y:auto;padding:24px;background:var(--bg);">
-    <div class="brief-header">
-      <div class="brief-title">📄 주간 투자 검토 브리핑 생성</div>
-      <div class="brief-sub">기간을 선택하면 해당 기간 기업이 자동 분류됩니다. 확인·수정 후 Word 파일로 다운로드하세요.</div>
-      <div class="brief-period-row">
-        <span class="brief-period-label">보고 기간</span>
-        <input type="date" class="brief-date-input" id="brief-start">
-        <span style="color:var(--text3);font-size:12px">~</span>
-        <input type="date" class="brief-date-input" id="brief-end">
-        <button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
-      </div>
-      <div class="brief-comment-area" id="brief-comment-area" style="display:none;">
-        <div class="brief-comment-label">📝 주간 총평 (PART 1 작성자 코멘트)</div>
-        <textarea class="brief-comment-input" id="brief-weekly-comment" placeholder="이번 주 전반적인 특징 또는 주목할 점을 3~5줄로 요약해주세요."></textarea>
-      </div>
-    </div>
-    <div id="brief-summary-bar-wrap"></div>
-    <div id="brief-download-bar" style="display:none;" class="brief-download-bar">
-      <button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()">⬇️ Word 브리핑 다운로드</button>
-    </div>
-    <div id="brief-body"></div>
-  </div>
-
-  <!-- BRIEFING AUTH MODAL -->
-  <div class="modal-overlay" id="brief-auth-modal" style="display:none;">
-    <div class="modal" style="width:400px;">
-      <div class="modal-header">
-        <div class="modal-title">🔒 브리핑 전용 인증</div>
-        <button class="modal-close" onclick="document.getElementById('brief-auth-modal').style.display='none'">✕</button>
-      </div>
-      <div class="modal-body" style="padding:24px;">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">주간 브리핑 기능은 담당자 전용입니다.</div>
-        <label class="form-label" style="display:block;margin-bottom:6px;">추가 비밀번호</label>
-        <input class="form-input" type="password" id="brief-pw-input" placeholder="비밀번호 입력"
-          onkeydown="if(event.key==='Enter')tryBriefingAuth()" style="width:100%;">
-        <div style="color:var(--danger);font-size:12px;margin-top:8px;display:none;" id="brief-pw-err">비밀번호가 올바르지 않습니다.</div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="document.getElementById('brief-auth-modal').style.display='none'">취소</button>
-        <button class="btn btn-primary" onclick="tryBriefingAuth()">확인</button>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>

@@ -398,6 +398,38 @@
   .brief-field-val{word-break:keep-all;overflow-wrap:break-word;}
   .brief-card-name{flex-shrink:0;}
   .brief-card-top{flex-wrap:wrap;}
+
+  /* ── 데이터 변경 안내 바 (눈에 띄게) ─────────── */
+  .brief-stale-bar{
+    display:none;align-items:center;gap:14px;
+    padding:14px 20px;margin-bottom:14px;
+    background:linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+    border:2px solid #FF9800;border-left:6px solid #FF6F00;
+    border-radius:4px;
+    box-shadow:0 2px 12px rgba(255,111,0,0.15);
+    animation:briefStaleBlink 1.5s ease-in-out 2;
+  }
+  @keyframes briefStaleBlink{
+    0%, 100%{box-shadow:0 2px 12px rgba(255,111,0,0.15);}
+    50%{box-shadow:0 2px 24px rgba(255,111,0,0.45);}
+  }
+  .brief-stale-icon{font-size:24px;flex-shrink:0;}
+  .brief-stale-text{flex:1;display:flex;flex-direction:column;gap:2px;}
+  .brief-stale-text strong{font-size:13px;color:#BF360C;font-weight:700;}
+  .brief-stale-reason{font-size:12px;color:#5D4037;}
+  .brief-stale-btn{
+    padding:8px 18px;background:#FF6F00;border:none;border-radius:3px;
+    color:#fff;font-size:12px;font-weight:700;cursor:pointer;
+    font-family:inherit;white-space:nowrap;
+    transition:background .15s;
+  }
+  .brief-stale-btn:hover{background:#E65100;}
+  .brief-stale-close{
+    background:transparent;border:none;color:#BF360C;
+    width:24px;height:24px;cursor:pointer;font-size:14px;
+    border-radius:2px;flex-shrink:0;font-family:inherit;
+  }
+  .brief-stale-close:hover{background:rgba(191,54,12,0.15);}
 </style>
 </head>
 <body>
@@ -820,6 +852,60 @@ function switchView(v){
   const tb=document.getElementById('tab-briefing');
   if(tb) tb.classList.toggle('active',v==='briefing');
   if(v==='dashboard') renderDashboard();
+  if(v==='briefing') checkBriefStale();  // 브리핑 진입 시 변경 감지
+}
+
+// 브리핑 데이터가 오래됐거나 시트가 변경됐는지 감지
+function checkBriefStale(){
+  // 아직 한 번도 로딩 안 한 경우 → 무시
+  if(!briefMeta.loadedAt || !briefMeta.dataSnapshot) return;
+  // 데이터 변경 감지
+  const currentSnapshot = snapshotAllData();
+  if(currentSnapshot !== briefMeta.dataSnapshot){
+    showBriefStaleBar('데이터가 변경됨');
+    return;
+  }
+  // 30분 이상 경과 시에도 안내
+  const minutesAgo = (new Date() - briefMeta.loadedAt) / 60000;
+  if(minutesAgo > 30){
+    showBriefStaleBar(`${Math.floor(minutesAgo)}분 전에 불러온 데이터`);
+  }
+}
+
+function showBriefStaleBar(reason){
+  let bar = document.getElementById('brief-stale-bar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'brief-stale-bar';
+    bar.className = 'brief-stale-bar';
+    const viewBriefing = document.getElementById('view-briefing');
+    const header = viewBriefing.querySelector('.brief-header-bar');
+    if(header && header.nextSibling){
+      viewBriefing.insertBefore(bar, header.nextSibling);
+    } else if(header){
+      header.parentNode.appendChild(bar);
+    }
+  }
+  bar.innerHTML = `
+    <span class="brief-stale-icon">⚠️</span>
+    <div class="brief-stale-text">
+      <strong>화면이 최신 상태가 아닙니다</strong>
+      <span class="brief-stale-reason">${reason} — 다른 탭에서 수정된 내용이 있을 수 있습니다.</span>
+    </div>
+    <button class="brief-stale-btn" onclick="reloadBriefingNow()">🔄 다시 불러오기</button>
+    <button class="brief-stale-close" onclick="hideBriefStaleBar()" title="닫기">✕</button>
+  `;
+  bar.style.display = 'flex';
+}
+
+function hideBriefStaleBar(){
+  const bar = document.getElementById('brief-stale-bar');
+  if(bar) bar.style.display = 'none';
+}
+
+function reloadBriefingNow(){
+  hideBriefStaleBar();
+  loadBriefing();
 }
 
 // ── DASHBOARD ──
@@ -1695,6 +1781,12 @@ function fmtDateKR(str){
 
 // 브리핑 상태
 let briefData = { green:[], yellow:[], red:[] };
+let briefMeta = { loadedAt: null, period: null, dataSnapshot: null };  // 마지막 로딩 시각·기간·데이터 스냅샷
+
+// 데이터 변경 감지용 — allData를 No.+의향+사유+담당자 기준으로 해시
+function snapshotAllData(){
+  return allData.map(r => `${r['No.']}|${r['투자검토진행 의향']||''}|${r['사유']||''}|${r['담당자배정']||''}`).join('§');
+}
 
 // 의향 → 분류
 // 기존 검토의향 → 브리핑 분류 (🟢/🟡/🔴) 매핑
@@ -1758,8 +1850,13 @@ function loadBriefing(){
   });
 
   renderBriefingBody(start, end, filtered.length);
-  /* brief-comment-area 제거됨 */
   document.getElementById('brief-dl-btn').style.display = 'inline-block';
+
+  // 메타 정보 저장 (변경 감지용)
+  briefMeta.loadedAt = new Date();
+  briefMeta.period = `${start}~${end}`;
+  briefMeta.dataSnapshot = snapshotAllData();
+  hideBriefStaleBar();
 }
 
 function renderBriefingBody(start, end, total){

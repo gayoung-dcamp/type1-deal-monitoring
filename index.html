@@ -665,6 +665,7 @@
 <th data-col="inv_point" style="width:80px">투자포인트<div class="col-resizer"></div></th>
 <th data-col="risk_point" style="width:80px">주요리스크<div class="col-resizer"></div></th>
 <th data-col="assignee" style="width:100px">담당자배정<div class="col-resizer"></div></th>
+<th data-col="final_opinion" style="width:160px">담당자 최종 의견<div class="col-resizer"></div></th>
 </tr></thead>
 <tbody id="table-body"></tbody>
 </table>
@@ -723,18 +724,18 @@
 
 <!-- 엑셀 다운로드 메뉴 -->
 <div id="excel-menu" class="excel-menu" style="display:none;">
-  <button class="excel-menu-item" onclick="downloadExcel('all')">
+  <button class="excel-menu-item" onclick="downloadExcel('allCols')">
     <span class="excel-menu-icon">📋</span>
     <div class="excel-menu-text">
-      <div class="excel-menu-title">전체 데이터 다운로드</div>
-      <div class="excel-menu-sub" id="excel-menu-all-count">전체 -건</div>
+      <div class="excel-menu-title">전체 컬럼 다운로드</div>
+      <div class="excel-menu-sub" id="excel-menu-all-info">모든 컬럼 · 전체 -건</div>
     </div>
   </button>
-  <button class="excel-menu-item" id="excel-menu-filtered" onclick="downloadExcel('filtered')">
+  <button class="excel-menu-item" onclick="downloadExcel('visibleCols')">
     <span class="excel-menu-icon">🔍</span>
     <div class="excel-menu-text">
-      <div class="excel-menu-title">현재 필터링된 데이터만 다운로드</div>
-      <div class="excel-menu-sub" id="excel-menu-filter-count">필터 적용 -건</div>
+      <div class="excel-menu-title">표시된 컬럼만 다운로드</div>
+      <div class="excel-menu-sub" id="excel-menu-visible-info">화면 표시 -개 컬럼 · -건</div>
     </div>
   </button>
 </div>
@@ -937,6 +938,7 @@ const COL_DEFS=[
   {key:'inv_point',label:'투자포인트'},
   {key:'risk_point',label:'주요리스크'},
   {key:'assignee',label:'담당자배정'},
+  {key:'final_opinion',label:'담당자 최종 의견'},
 ];
 const DEFAULT_HIDDEN=new Set(['biz_no','inv_date_type','val_type','batch_route','direct_date','confirmer','confirm_date','reason','note']);
 let hiddenCols=new Set(JSON.parse(localStorage.getItem('dangel_hidden_cols')||'null')||[...DEFAULT_HIDDEN]);
@@ -1451,6 +1453,7 @@ function renderTable(){
       <td data-col="inv_point" style="color:${r['투자포인트']?'var(--orange)':'var(--text3)'}">${r['투자포인트']?'📝 있음':'-'}</td>
       <td data-col="risk_point" style="color:${r['주요리스크']?'var(--warn)':'var(--text3)'}">${r['주요리스크']?'⚠️ 있음':'-'}</td>
       <td data-col="assignee">${esc(r['담당자배정'])||'-'}</td>
+      <td data-col="final_opinion" data-vtype="textarea" style="white-space:pre-wrap;line-height:1.5;font-size:11px;color:var(--text2);max-width:200px;" title="${esc(r['담당자 최종 의견']||'')}">${esc(r['담당자 최종 의견']||'-')}</td>
     </tr>`;
   }).join('');
   applyColVisibility();renderPagination();updateStats();
@@ -2461,24 +2464,15 @@ function toggleExcelMenu(event){
   menu.style.left = (rect.right - 300) + 'px';
   menu.style.display = 'block';
 
-  // 갯수 업데이트
-  const allCount = (allData && allData.length) || 0;
-  const filteredCount = (filteredData && filteredData.length) || allCount;
-  const allSpan = document.getElementById('excel-menu-all-count');
-  const filterSpan = document.getElementById('excel-menu-filter-count');
-  const filterBtn = document.getElementById('excel-menu-filtered');
-  if(allSpan) allSpan.textContent = `전체 ${allCount}건`;
-  if(filterSpan) filterSpan.textContent = `필터 적용 ${filteredCount}건`;
-  // 필터링되지 않은 상태(전체 = 필터)면 두번째 메뉴 비활성화
-  if(filterBtn){
-    if(filteredCount === allCount){
-      filterBtn.disabled = true;
-      filterBtn.title = '필터를 적용한 후 사용하세요';
-    } else {
-      filterBtn.disabled = false;
-      filterBtn.title = '';
-    }
-  }
+  // 갯수/컬럼수 업데이트
+  const dataCount = (filteredData && filteredData.length) || (allData && allData.length) || 0;
+  const allColsCount = COL_DEFS.filter(c => c.key !== 'chk').length;
+  const visibleCount = COL_DEFS.filter(c => c.key !== 'chk' && (!hiddenCols || !hiddenCols.has(c.key))).length;
+
+  const allInfo = document.getElementById('excel-menu-all-info');
+  const visInfo = document.getElementById('excel-menu-visible-info');
+  if(allInfo) allInfo.textContent = `전체 ${allColsCount}개 컬럼 · ${dataCount}건`;
+  if(visInfo) visInfo.textContent = `화면 표시 ${visibleCount}개 컬럼 · ${dataCount}건`;
 
   // 외부 클릭 시 닫기
   setTimeout(() => {
@@ -2491,22 +2485,27 @@ function closeExcelMenu(){
   if(menu) menu.style.display = 'none';
 }
 
-function downloadExcel(scope){
+function downloadExcel(mode){
   closeExcelMenu();
   if(typeof XLSX === 'undefined'){
     showToast('⚠️ 엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.');
     return;
   }
 
-  const data = scope === 'filtered' ? (filteredData || allData) : allData;
+  // 데이터: 필터가 적용되어 있으면 필터링된 결과, 아니면 전체
+  const data = (filteredData && filteredData.length) ? filteredData : allData;
   if(!data || !data.length){
     showToast('다운로드할 데이터가 없습니다.');
     return;
   }
 
   try {
-    // 현재 화면에 표시 중인 컬럼만 추출
-    const visibleCols = COL_DEFS.filter(c => c.key !== 'chk' && (!visibleColKeys || visibleColKeys.has(c.key)));
+    // 컬럼 선택: 모드에 따라 분기
+    // 'allCols' → 모든 컬럼
+    // 'visibleCols' → 화면에 표시된(열 표시 설정에 켠) 컬럼만
+    const visibleCols = mode === 'allCols'
+      ? COL_DEFS.filter(c => c.key !== 'chk')
+      : COL_DEFS.filter(c => c.key !== 'chk' && (!hiddenCols || !hiddenCols.has(c.key)));
     // 컬럼 헤더 → 시트 헤더 매핑
     const KEY_TO_HEADER = {
       no:'No.', company:'투자기업명', gp:'GP명', reviewer:'담당심사역', fund:'펀드명',
@@ -2557,9 +2556,9 @@ function downloadExcel(scope){
 
     const today = new Date();
     const dateStr = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
-    const fileName = scope === 'filtered'
-      ? `딜소싱_필터데이터_${dateStr}_${data.length}건.xlsx`
-      : `딜소싱_전체데이터_${dateStr}.xlsx`;
+    const fileName = mode === 'allCols'
+      ? `딜소싱_전체컬럼_${dateStr}_${data.length}건.xlsx`
+      : `딜소싱_표시컬럼_${dateStr}_${data.length}건.xlsx`;
 
     XLSX.writeFile(wb, fileName);
     showToast(`✅ ${data.length}건 다운로드 완료`, true);

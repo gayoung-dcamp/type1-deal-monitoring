@@ -463,7 +463,22 @@
   .policy-actions{display:flex;gap:4px;justify-content:flex-end;}
   .policy-mini-btn{background:transparent;border:none;padding:2px 6px;font-size:11px;cursor:pointer;color:var(--text3);border-radius:2px;font-family:inherit;}
   .policy-mini-btn:hover{color:var(--danger);background:rgba(214,48,48,0.08);}
+
+  /* ── 엑셀 다운로드 ── */
+  .btn-excel{padding:8px 14px;background:transparent;border:1px solid #555;border-radius:2px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;transition:all .15s;}
+  .btn-excel:hover{border-color:#1a9e57;color:#1a9e57;}
+  .excel-menu{position:fixed;background:var(--white);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:300px;z-index:1000;overflow:hidden;}
+  .excel-menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:left;font-family:inherit;transition:background .1s;}
+  .excel-menu-item:last-child{border-bottom:none;}
+  .excel-menu-item:hover{background:var(--bg);}
+  .excel-menu-item:disabled{opacity:.4;cursor:not-allowed;}
+  .excel-menu-item:disabled:hover{background:none;}
+  .excel-menu-icon{font-size:20px;flex-shrink:0;}
+  .excel-menu-text{flex:1;}
+  .excel-menu-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+  .excel-menu-sub{font-size:11px;color:var(--text3);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <!-- LOGIN -->
@@ -490,6 +505,7 @@
 <div class="stat-chip">링크확인 <span id="stat-link">-</span>건</div>
 <div class="stat-chip">미제출 <span id="stat-missing">-</span>건</div>
 <button class="btn-refresh" id="btn-refresh" onclick="manualRefresh()" title="구글시트 최신 데이터 불러오기"><span class="spin">🔄</span> 새로고침</button>
+<button class="btn-excel" onclick="toggleExcelMenu(event)" title="엑셀 다운로드">📥 엑셀 다운로드 <span style="font-size:9px;">▾</span></button>
 <button class="btn-policy" onclick="openFocusPolicyModal()" title="집중투자 정책 관리">⭐ 정책 관리</button>
 <button class="btn-add" onclick="openAddModal()">＋ 추가</button>
 <button class="btn-logout" onclick="logout()">로그아웃</button>
@@ -703,6 +719,25 @@
 <div id="toast"></div>
 <!-- BRIEFING VIEW -->
 
+
+
+<!-- 엑셀 다운로드 메뉴 -->
+<div id="excel-menu" class="excel-menu" style="display:none;">
+  <button class="excel-menu-item" onclick="downloadExcel('all')">
+    <span class="excel-menu-icon">📋</span>
+    <div class="excel-menu-text">
+      <div class="excel-menu-title">전체 데이터 다운로드</div>
+      <div class="excel-menu-sub" id="excel-menu-all-count">전체 -건</div>
+    </div>
+  </button>
+  <button class="excel-menu-item" id="excel-menu-filtered" onclick="downloadExcel('filtered')">
+    <span class="excel-menu-icon">🔍</span>
+    <div class="excel-menu-text">
+      <div class="excel-menu-title">현재 필터링된 데이터만 다운로드</div>
+      <div class="excel-menu-sub" id="excel-menu-filter-count">필터 적용 -건</div>
+    </div>
+  </button>
+</div>
 
 <!-- ── 집중투자 정책 관리 모달 ── -->
 <div class="modal-overlay" id="focus-policy-modal" onclick="if(event.target===this)closeModal('focus-policy-modal')" style="display:none;">
@@ -1750,6 +1785,9 @@ function renderForm(r){
       <div class="form-grid cols1" style="margin-top:14px">
         <div class="form-group"><div class="form-label">담당자배정</div>${inp('담당자배정')}</div>
       </div>
+      <div class="form-grid cols1" style="margin-top:14px">
+        <div class="form-group"><div class="form-label">담당자 최종 의견 <span style="font-size:10px;color:var(--text3);font-weight:400;">(여러 줄 입력 가능)</span></div>${ta('담당자 최종 의견')}</div>
+      </div>
     </div>
     <div class="form-section"><div class="form-section-title">투자검토보고서 내 주요내용 요약</div>
       <div class="form-grid cols1">
@@ -2402,6 +2440,132 @@ async function saveFocusPolicy(){
   } finally {
     btn.disabled = false;
     btn.textContent = '💾 저장';
+  }
+}
+
+// ── 엑셀 다운로드 ──────────────────────────────────────────
+function toggleExcelMenu(event){
+  event.stopPropagation();
+  const menu = document.getElementById('excel-menu');
+  if(!menu) return;
+
+  if(menu.style.display === 'block'){
+    menu.style.display = 'none';
+    return;
+  }
+
+  // 위치 계산 (버튼 아래)
+  const btn = event.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.left = (rect.right - 300) + 'px';
+  menu.style.display = 'block';
+
+  // 갯수 업데이트
+  const allCount = (allData && allData.length) || 0;
+  const filteredCount = (filteredData && filteredData.length) || allCount;
+  const allSpan = document.getElementById('excel-menu-all-count');
+  const filterSpan = document.getElementById('excel-menu-filter-count');
+  const filterBtn = document.getElementById('excel-menu-filtered');
+  if(allSpan) allSpan.textContent = `전체 ${allCount}건`;
+  if(filterSpan) filterSpan.textContent = `필터 적용 ${filteredCount}건`;
+  // 필터링되지 않은 상태(전체 = 필터)면 두번째 메뉴 비활성화
+  if(filterBtn){
+    if(filteredCount === allCount){
+      filterBtn.disabled = true;
+      filterBtn.title = '필터를 적용한 후 사용하세요';
+    } else {
+      filterBtn.disabled = false;
+      filterBtn.title = '';
+    }
+  }
+
+  // 외부 클릭 시 닫기
+  setTimeout(() => {
+    document.addEventListener('click', closeExcelMenu, { once: true });
+  }, 10);
+}
+
+function closeExcelMenu(){
+  const menu = document.getElementById('excel-menu');
+  if(menu) menu.style.display = 'none';
+}
+
+function downloadExcel(scope){
+  closeExcelMenu();
+  if(typeof XLSX === 'undefined'){
+    showToast('⚠️ 엑셀 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+
+  const data = scope === 'filtered' ? (filteredData || allData) : allData;
+  if(!data || !data.length){
+    showToast('다운로드할 데이터가 없습니다.');
+    return;
+  }
+
+  try {
+    // 현재 화면에 표시 중인 컬럼만 추출
+    const visibleCols = COL_DEFS.filter(c => c.key !== 'chk' && (!visibleColKeys || visibleColKeys.has(c.key)));
+    // 컬럼 헤더 → 시트 헤더 매핑
+    const KEY_TO_HEADER = {
+      no:'No.', company:'투자기업명', gp:'GP명', reviewer:'담당심사역', fund:'펀드명',
+      biz_no:'사업자등록번호', industry:'업종(표준산업)', biz:'주요사업(서비스)',
+      inv_amt:'투자금액(억원)', inv_date:'투자일자', inv_date_type:'투자일자 기준',
+      pre:'기업가치(Pre, 억원)', post:'기업가치(Post, 억원) ', val_type:'Post : Outstanding(발행주식수 기준)/Full-dilution(완전희석 기준)',
+      report:'투자검토보고서 링크', remark:'비고',
+      batch_apply:'배치신청횟수', batch_select:'배치선정 기수', batch_route:'배치지원루트',
+      direct:'직접투자 여부 (O/X)', direct_date:'직접투자 일자',
+      domain:'디캠프 기준 산업분류', focus_year:'집중투자연도',
+      val_0_150:'기업가치(0~150억원)', val_150_360:'기업가치(150~360억원)',
+      data_check:'자료 확인 여부', checker:'확인자', check_date:'확인일자',
+      core_summary:'기업 핵심 요약', inv_point:'투자포인트', risk:'주요리스크',
+      remark2:'기타 참고사항', recheck:'검토 시 재확인 포인트',
+      intention:'투자검토진행 의향', reason:'사유', assignee:'담당자배정', final_opinion:'담당자 최종 의견'
+    };
+
+    // 데이터를 행 단위로 변환 (객체의 키는 시트 헤더, 값은 셀 값)
+    const rows = data.map(r => {
+      const obj = {};
+      visibleCols.forEach(col => {
+        const sheetHeader = KEY_TO_HEADER[col.key] || col.label;
+        // No. 같은 정확한 매칭이 우선
+        let val = r[sheetHeader];
+        if(val === undefined){
+          // 한 번 더 시도 — col.label로
+          val = r[col.label] || '';
+        }
+        obj[col.label] = val || '';
+      });
+      return obj;
+    });
+
+    // 시트 생성
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // 컬럼 너비 자동 조정 (글자수 기준 대략적으로)
+    const colWidths = visibleCols.map(col => {
+      const headerLen = (col.label || '').length * 1.5;
+      const maxDataLen = Math.min(50, Math.max(...rows.slice(0, 100).map(r => String(r[col.label]||'').length)));
+      return { wch: Math.max(8, Math.min(50, Math.max(headerLen, maxDataLen) + 2)) };
+    });
+    ws['!cols'] = colWidths;
+
+    // 워크북 생성 + 다운로드
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '딜소싱 데이터');
+
+    const today = new Date();
+    const dateStr = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+    const fileName = scope === 'filtered'
+      ? `딜소싱_필터데이터_${dateStr}_${data.length}건.xlsx`
+      : `딜소싱_전체데이터_${dateStr}.xlsx`;
+
+    XLSX.writeFile(wb, fileName);
+    showToast(`✅ ${data.length}건 다운로드 완료`, true);
+  } catch(e){
+    console.error('엑셀 다운로드 실패:', e);
+    showToast('⚠️ 엑셀 다운로드 실패: ' + (e.message || '알 수 없는 오류'));
   }
 }
 

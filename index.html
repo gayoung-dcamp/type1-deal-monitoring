@@ -617,13 +617,19 @@
 <option value="done">확인 완료</option>
 <option value="pending">미확인</option>
 </select>
-<select class="filter-select" id="filter-intention" onchange="applyFilters()">
-<option value="">검토 의향 전체</option>
-<option value="투자검토진행중">투자검토진행중</option>
-<option value="기업가치 초과">기업가치 초과</option>
-<option value="투자완료">투자완료</option>
-<option value="동일기업 검토완료">동일기업 검토완료</option>
-</select>
+<div class="ms-wrap" id="ms-intention">
+<div class="ms-btn" id="ms-intention-btn" onclick="toggleMs('intention')"><span id="ms-intention-label">검토 의향 전체</span></div>
+<div class="ms-dropdown">
+<div id="ms-intention-items">
+<label class="ms-item"><input type="checkbox" value="투자검토진행중" onchange="updateMsLabel('intention');applyFilters()"><span>🟢 투자검토진행중</span></label>
+<label class="ms-item"><input type="checkbox" value="기업가치 초과" onchange="updateMsLabel('intention');applyFilters()"><span>🔴 기업가치 초과</span></label>
+<label class="ms-item"><input type="checkbox" value="투자완료" onchange="updateMsLabel('intention');applyFilters()"><span>🔵 투자완료</span></label>
+<label class="ms-item"><input type="checkbox" value="동일기업 검토완료" onchange="updateMsLabel('intention');applyFilters()"><span>⚫ 동일기업 검토완료</span></label>
+<label class="ms-item"><input type="checkbox" value="__EMPTY__" onchange="updateMsLabel('intention');applyFilters()"><span style="color:var(--text3);">⚪ (미기재)</span></label>
+</div>
+<span class="ms-clear" onclick="clearMs('intention')">선택 초기화</span>
+</div>
+</div>
 <div class="ms-wrap" id="ms-domain">
 <div class="ms-btn" id="ms-domain-btn" onclick="toggleMs('domain')"><span id="ms-domain-label">투자도메인 전체</span></div>
 <div class="ms-dropdown">
@@ -1340,20 +1346,20 @@ function clearMs(key){document.querySelectorAll(`#ms-${key}-items input[type=che
 function updateMsLabel(key){
   const checked=[...document.querySelectorAll(`#ms-${key}-items input:checked`)].map(cb=>cb.value);
   const btn=document.getElementById('ms-'+key+'-btn'),label=document.getElementById('ms-'+key+'-label');
-  const defaults={gp:'전체 GP',domain:'투자도메인 전체',val:'기업가치 전체',assignee:'담당자 전체'};
+  const defaults={gp:'전체 GP',domain:'투자도메인 전체',val:'기업가치 전체',assignee:'담당자 전체',intention:'검토 의향 전체'};
   if(!checked.length){if(label) label.textContent=defaults[key]||'전체';btn.classList.remove('has-sel');const b=btn.querySelector('.ms-badge');if(b)b.remove();}
-  else{if(label) label.textContent=checked.length===1?checked[0]:checked[0]+' 외';btn.classList.add('has-sel');let b=btn.querySelector('.ms-badge');if(!b){b=document.createElement('span');b.className='ms-badge';btn.appendChild(b);}b.textContent=checked.length;}
+  else{if(label) label.textContent=checked.length===1?(checked[0]==='__EMPTY__'?'(미기재)':checked[0]):((checked[0]==='__EMPTY__'?'(미기재)':checked[0])+' 외 '+(checked.length-1));btn.classList.add('has-sel');let b=btn.querySelector('.ms-badge');if(!b){b=document.createElement('span');b.className='ms-badge';btn.appendChild(b);}b.textContent=checked.length;}
 }
 function getMsValues(key){return [...document.querySelectorAll(`#ms-${key}-items input:checked`)].map(cb=>cb.value);}
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-wrap.open').forEach(el=>el.classList.remove('open'));});
-document.addEventListener('change',e=>{['gp','domain','val','assignee'].forEach(k=>{if(e.target.closest(`#ms-${k}-items`)) updateMsLabel(k);});});
+document.addEventListener('change',e=>{['gp','domain','val','assignee','intention'].forEach(k=>{if(e.target.closest(`#ms-${k}-items`)) updateMsLabel(k);});});
 
 // ── FILTERS ──
 function toggleFilter(f){activeFilters[f]=!activeFilters[f];document.getElementById('btn-'+f).classList.toggle('active',activeFilters[f]);applyFilters();}
 function clearFilters(){
   document.getElementById('search-input').value='';
-  ['filter-link','filter-confirmed','filter-intention'].forEach(id=>document.getElementById(id).value='');
-  ['gp','domain','val','assignee'].forEach(k=>clearMs(k));
+  ['filter-link','filter-confirmed'].forEach(id=>document.getElementById(id).value='');
+  ['gp','domain','val','assignee','intention'].forEach(k=>clearMs(k));
   activeFilters={batch:false,direct:false};
   ['btn-batch','btn-direct'].forEach(id=>document.getElementById(id).classList.remove('active'));
   applyFilters();
@@ -1362,7 +1368,7 @@ function applyFilters(){
   const q=document.getElementById('search-input').value.toLowerCase();
   const selGPs=getMsValues('gp'),lnk=document.getElementById('filter-link').value;
   const selVals=getMsValues('val'),conf=document.getElementById('filter-confirmed').value;
-  const intent=document.getElementById('filter-intention').value,selDomains=getMsValues('domain');
+  const selIntents=getMsValues('intention'),selDomains=getMsValues('domain');
   const selAssignees=getMsValues('assignee');
   filteredData=allData.filter(r=>{
     if(q){const h=[r['투자기업명'],r['GP명'],r['업종(표준산업)'],r['주요사업(서비스)'],r['펀드명']].join(' ').toLowerCase();if(!h.includes(q))return false;}
@@ -1372,7 +1378,12 @@ function applyFilters(){
     if(selVals.length){const ok=(selVals.includes('0_150')&&r['기업가치(0~150억원)']==='O')||(selVals.includes('150_360')&&r['기업가치(150~360억원)']==='O');if(!ok)return false;}
     if(conf==='done'&&r['자료 확인 여부']!=='O') return false;
     if(conf==='pending'&&r['자료 확인 여부']==='O') return false;
-    if(intent&&r['투자검토진행 의향']!==intent) return false;
+    if(selIntents.length){
+      const intent=(r['투자검토진행 의향']||'').trim();
+      const isEmpty=!intent;
+      const hasMatch=(isEmpty&&selIntents.includes('__EMPTY__'))||selIntents.includes(intent);
+      if(!hasMatch) return false;
+    }
     if(selDomains.length&&!selDomains.includes(r['디캠프 기준 산업분류'])) return false;
     if(selAssignees.length&&!selAssignees.includes(r['담당자배정'])) return false;
     if(activeFilters.batch&&!r['배치신청횟수']) return false;

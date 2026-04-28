@@ -477,6 +477,35 @@
   .excel-menu-text{flex:1;}
   .excel-menu-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
   .excel-menu-sub{font-size:11px;color:var(--text3);}
+
+  /* ── 필수 항목 표시 & 검증 ── */
+  .required-mark{color:var(--danger);font-weight:700;margin-left:2px;}
+  .form-group.field-error .form-label{color:var(--danger);}
+  .form-group.field-error .form-input,
+  .form-group.field-error .form-select,
+  .form-group.field-error textarea.form-input{
+    border-color:var(--danger) !important;
+    background:rgba(214,48,48,0.04);
+    box-shadow:0 0 0 1px rgba(214,48,48,0.15);
+  }
+  .form-error-banner{
+    display:flex;align-items:flex-start;gap:12px;
+    padding:14px 16px;margin:0 0 16px 0;
+    background:linear-gradient(135deg, #FFF1F1 0%, #FFE0E0 100%);
+    border:2px solid var(--danger);border-left:6px solid #B71C1C;
+    border-radius:4px;
+    box-shadow:0 2px 8px rgba(214,48,48,0.15);
+  }
+  .form-error-icon{font-size:20px;flex-shrink:0;line-height:1;}
+  .form-error-text{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .form-error-text strong{font-size:13px;color:#B71C1C;font-weight:700;}
+  .form-error-text span{font-size:12px;color:#7A1818;line-height:1.5;}
+  .form-error-close{
+    background:transparent;border:none;color:#B71C1C;
+    width:24px;height:24px;cursor:pointer;font-size:14px;
+    border-radius:2px;flex-shrink:0;font-family:inherit;
+  }
+  .form-error-close:hover{background:rgba(183,28,28,0.15);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -1628,6 +1657,7 @@ async function openEdit(idx){
   const r=allData[idx];
   document.getElementById('add-modal-title').textContent=`수정: ${r['투자기업명']||'기업'}`;
   renderForm(r);
+  setTimeout(markRequiredFields, 50);  // 폼 렌더링 후 필수 표시
   // 수정 모드: 저장된 값이 Pre 자동계산과 다르면 '수동'으로 표시
   const expected=calcValRange(r['기업가치(Pre, 억원)']||'');
   manualOverride.v0150=(r['기업가치(0~150억원)']||'')!==expected.v0150 && (r['기업가치(0~150억원)']||'')!=='';
@@ -1688,6 +1718,7 @@ function openAddModal(){
   editingIdx=null;
   document.getElementById('add-modal-title').textContent='새 항목 추가';
   renderForm({});
+  setTimeout(markRequiredFields, 50);  // 폼 렌더링 후 필수 표시
   // 신규: 초기 수동 상태 아님
   manualOverride.v0150=false;manualOverride.v150360=false;
   attachValRangeListeners();
@@ -1870,11 +1901,141 @@ function attachValRangeListeners(){
 }
 
 
+
+
+// 필수 항목에 빨간 별표(*) 표시
+function markRequiredFields(){
+  const REQUIRED_KEYS = [
+    'GP명','담당심사역','펀드명','사업자등록번호','보고서 보관 위치',
+    '투자기업명','업종(표준산업)','주요사업(서비스)',
+    '투자금액(억원)','투자일자','투자일자 기준',
+    '기업가치(Pre, 억원)',
+    'Post : Outstanding(발행주식수 기준)/Full-dilution(완전희석 기준)',
+    '투자검토보고서 링크'
+  ];
+  REQUIRED_KEYS.forEach(key => {
+    const el = document.querySelector(`#add-modal-body [data-key="${key.replace(/"/g, '\\"')}"]`);
+    if(!el) return;
+    const group = el.closest('.form-group');
+    if(!group) return;
+    const label = group.querySelector('.form-label');
+    if(!label) return;
+    // 이미 별표 있으면 추가 안 함
+    if(label.querySelector('.required-mark')) return;
+    // 별표 추가
+    const star = document.createElement('span');
+    star.className = 'required-mark';
+    star.textContent = ' *';
+    star.title = '필수 입력 항목';
+    label.appendChild(star);
+  });
+}
+
+// 필수 입력 후 에러 강조 자동 해제
+document.addEventListener('input', function(e){
+  if(e.target.matches('#add-modal-body [data-key]')){
+    const group = e.target.closest('.form-group');
+    if(group && group.classList.contains('field-error') && e.target.value.trim()){
+      group.classList.remove('field-error');
+    }
+  }
+});
+document.addEventListener('change', function(e){
+  if(e.target.matches('#add-modal-body [data-key]')){
+    const group = e.target.closest('.form-group');
+    if(group && group.classList.contains('field-error') && e.target.value.trim()){
+      group.classList.remove('field-error');
+    }
+  }
+});
+
 async function saveNewItem(){
   if(saveInProgress){showToast('저장 진행 중...');return;}
   const inputs=document.querySelectorAll('#add-modal-body [data-key]');
   const rec={};inputs.forEach(el=>{rec[el.dataset.key]=el.value.trim();});
-  if(!rec['투자기업명']){showToast('투자기업명은 필수입니다.');return;}
+
+  // ── 필수 항목 검증 ──────────────────────────────
+  const REQUIRED_FIELDS = [
+    'GP명','담당심사역','펀드명','사업자등록번호','보고서 보관 위치',
+    '투자기업명','업종(표준산업)','주요사업(서비스)',
+    '투자금액(억원)','투자일자','투자일자 기준',
+    '기업가치(Pre, 억원)','Post : Outstanding(발행주식수 기준)/Full-dilution(완전희석 기준)'
+  ];
+  // 라벨 표시용 매핑 (긴 키 → 짧은 라벨)
+  const FIELD_LABELS = {
+    'Post : Outstanding(발행주식수 기준)/Full-dilution(완전희석 기준)': '밸류 기준'
+  };
+
+  // 1) 모든 빈 필수 필드 찾기
+  const emptyFields = [];
+  // 기존 에러 표시 클래스 제거
+  document.querySelectorAll('#add-modal-body .form-group.field-error').forEach(g => {
+    g.classList.remove('field-error');
+  });
+  // 기존 에러 안내 바 제거
+  const existingErr = document.getElementById('form-error-banner');
+  if(existingErr) existingErr.remove();
+
+  for(const field of REQUIRED_FIELDS){
+    const val = (rec[field] || '').trim();
+    if(!val){
+      emptyFields.push(field);
+      // 해당 input/select의 부모 form-group을 빨간색 강조
+      const el = document.querySelector(`#add-modal-body [data-key="${field.replace(/"/g, '\\"')}"]`);
+      if(el){
+        const group = el.closest('.form-group');
+        if(group) group.classList.add('field-error');
+      }
+    }
+  }
+
+  // 2) 보고서 링크 조건부 필수 검증 (링크 없으면 '미제출' 체크 필요)
+  const reportLink = (rec['투자검토보고서 링크'] || '').trim();
+  const reportNotSubmitted = (rec['보고서 미제출'] || '').trim() === 'O' ||
+                              (rec['보고서 미제출'] || '').trim() === 'TRUE';
+  if(!reportLink && !reportNotSubmitted){
+    emptyFields.push('투자검토보고서 링크');
+    const el = document.querySelector('#add-modal-body [data-key="투자검토보고서 링크"]');
+    if(el){
+      const group = el.closest('.form-group');
+      if(group) group.classList.add('field-error');
+    }
+  }
+
+  // 3) 빈 항목이 있으면 안내
+  if(emptyFields.length > 0){
+    // 라벨로 변환
+    const labels = emptyFields.map(f => FIELD_LABELS[f] || f);
+    // (a) alert으로 1차 알림
+    const msg = `다음 ${labels.length}개 필수 항목을 입력해주세요:\n\n• ${labels.join('\n• ')}`;
+    alert(msg);
+
+    // (b) 모달 상단에 인라인 안내 바 표시 (영구적, 사용자가 X 누를 때까지)
+    const modalBody = document.getElementById('add-modal-body');
+    if(modalBody){
+      const banner = document.createElement('div');
+      banner.id = 'form-error-banner';
+      banner.className = 'form-error-banner';
+      banner.innerHTML = `
+        <span class="form-error-icon">⚠️</span>
+        <div class="form-error-text">
+          <strong>${labels.length}개 필수 항목이 비어있습니다</strong>
+          <span>${labels.join(' · ')}</span>
+        </div>
+        <button class="form-error-close" onclick="this.parentElement.remove()" title="닫기">✕</button>
+      `;
+      modalBody.insertBefore(banner, modalBody.firstChild);
+    }
+
+    // (c) 첫 번째 빈 항목으로 스크롤 + 포커스
+    const firstEmptyEl = document.querySelector('#add-modal-body .form-group.field-error');
+    if(firstEmptyEl){
+      firstEmptyEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = firstEmptyEl.querySelector('input, select, textarea');
+      if(input) setTimeout(() => input.focus(), 400);
+    }
+    return;
+  }
 
   saveInProgress=true;
   const isEdit=editingIdx!==null;

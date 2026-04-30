@@ -200,7 +200,7 @@
   /* MODAL */
   .modal-overlay{position:fixed;inset:0;background:rgba(38,37,37,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;}
   .modal{background:var(--white);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:2px;width:720px;max-width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.15);}
-  .modal.wide{width:920px;}
+  .modal.wide{width:1200px;}
   .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
   .modal-title{font-size:15px;font-weight:600;}
   .modal-close{background:transparent;border:none;color:var(--text3);font-size:18px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:2px;transition:all .15s;}
@@ -506,6 +506,25 @@
     border-radius:2px;flex-shrink:0;font-family:inherit;
   }
   .form-error-close:hover{background:rgba(183,28,28,0.15);}
+
+  /* ── 주간 브리핑 검색 바 ── */
+  .brief-search-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;background:var(--white);border:1px solid var(--border);border-radius:2px;}
+  .brief-search-icon{font-size:14px;color:var(--text2);}
+  .brief-search-input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:2px;font-size:13px;font-family:inherit;color:var(--text);outline:none;background:var(--bg);}
+  .brief-search-input:focus{border-color:var(--orange);background:var(--white);}
+  .brief-search-clear{background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--text3);width:24px;height:24px;cursor:pointer;font-size:11px;font-family:inherit;}
+  .brief-search-clear:hover{border-color:var(--danger);color:var(--danger);}
+  .brief-search-info{font-size:11px;color:var(--text3);min-width:80px;text-align:right;}
+  .brief-search-expand{padding:6px 12px;background:var(--white);border:1px solid var(--orange);border-radius:2px;color:var(--orange);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .brief-search-expand:hover{background:var(--accent-glow);}
+  /* 검색 매치 강조 */
+  .brief-card.search-hidden{display:none !important;}
+
+  /* ── 주간 브리핑 빠른 기간 선택 ── */
+  .brief-quick-presets{display:flex;gap:4px;margin-left:6px;}
+  .brief-preset-btn{padding:6px 11px;background:var(--white);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .brief-preset-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--accent-glow);}
+  .brief-preset-btn.active{background:var(--orange);color:var(--white);border-color:var(--orange);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -719,11 +738,28 @@
 <input class="brief-date-input" id="brief-start" type="date"/>
 <span style="color:var(--text3);font-size:12px">~</span>
 <input class="brief-date-input" id="brief-end" type="date"/>
+<div class="brief-quick-presets">
+  <button class="brief-preset-btn" onclick="setBriefPeriod('week1')" title="오늘 기준 최근 1주일">1주</button>
+  <button class="brief-preset-btn" onclick="setBriefPeriod('week2')" title="오늘 기준 최근 2주일">2주</button>
+  <button class="brief-preset-btn" onclick="setBriefPeriod('month1')" title="오늘 기준 최근 1개월">1개월</button>
+  <button class="brief-preset-btn" onclick="setBriefPeriod('all')" title="전체 데이터의 투자일자 범위">전체기간</button>
+</div>
 <button class="brief-load-btn" onclick="loadBriefing()">🔍 데이터 불러오기</button>
 <div style="flex:1"></div>
 <button class="brief-dl-btn" id="brief-dl-btn" onclick="downloadBriefingWord()" style="display:none;">⬇️ Word 브리핑 다운로드</button>
 </div>
 <div id="brief-summary-bar-wrap"></div>
+<div id="brief-search-bar" class="brief-search-bar" style="display:none;">
+  <span class="brief-search-icon">🔍</span>
+  <input type="text" id="brief-search-input" class="brief-search-input"
+         placeholder="기업명·GP명·주요사업으로 검색..."
+         oninput="applyBriefSearch()">
+  <button class="brief-search-clear" id="brief-search-clear" onclick="clearBriefSearch()" style="display:none;" title="검색어 지우기">✕</button>
+  <span class="brief-search-info" id="brief-search-info"></span>
+  <button class="brief-search-expand" id="brief-search-expand" onclick="expandToFullData()" style="display:none;" title="전체 데이터에서 검색">
+    🔎 전체 데이터에서 더 찾기
+  </button>
+</div>
 <div id="brief-download-bar" style="display:none;"></div>
 <div id="brief-body"></div>
 </div></div>
@@ -2228,6 +2264,7 @@ function loadBriefing(){
   briefMeta.period = `${start}~${end}`;
   briefMeta.dataSnapshot = snapshotAllData();
   hideBriefStaleBar();
+  showBriefSearchBar();  // 검색 바 표시
 }
 
 function renderBriefingBody(start, end, total){
@@ -2442,6 +2479,188 @@ async function saveBriefingToSheet(){
   } else {
     showToast(`⚠️ 저장 일부 실패: 성공 ${saved} / 실패 ${failed}`);
   }
+}
+
+// ── 주간 브리핑 검색 ──────────────────────────────────────
+function applyBriefSearch(){
+  const input = document.getElementById('brief-search-input');
+  const clearBtn = document.getElementById('brief-search-clear');
+  const info = document.getElementById('brief-search-info');
+  const expandBtn = document.getElementById('brief-search-expand');
+  const q = (input.value || '').trim().toLowerCase();
+
+  if(!q){
+    // 검색어 없음 — 모든 카드 표시 + 보조 버튼 숨김
+    document.querySelectorAll('.brief-card').forEach(card => card.classList.remove('search-hidden'));
+    document.querySelectorAll('.brief-skip-table tbody tr').forEach(tr => tr.classList.remove('search-hidden'));
+    if(clearBtn) clearBtn.style.display = 'none';
+    if(info) info.textContent = '';
+    if(expandBtn) expandBtn.style.display = 'none';
+    return;
+  }
+  if(clearBtn) clearBtn.style.display = 'inline-block';
+
+  // 카드 필터링 (검토 권장 / 조건부)
+  let matchCount = 0;
+  let totalCount = 0;
+  document.querySelectorAll('.brief-card').forEach(card => {
+    totalCount++;
+    const text = card.textContent.toLowerCase();
+    if(text.includes(q)){
+      card.classList.remove('search-hidden');
+      matchCount++;
+    } else {
+      card.classList.add('search-hidden');
+    }
+  });
+
+  // 검토 불필요 표 행도 필터링
+  document.querySelectorAll('.brief-skip-table tbody tr').forEach(tr => {
+    totalCount++;
+    const text = tr.textContent.toLowerCase();
+    if(text.includes(q)){
+      tr.classList.remove('search-hidden');
+      matchCount++;
+    } else {
+      tr.classList.add('search-hidden');
+    }
+  });
+
+  if(info) info.textContent = `${matchCount} / ${totalCount}건`;
+
+  // 결과 0건이면 "전체 데이터에서 더 찾기" 버튼 표시
+  if(expandBtn){
+    if(matchCount === 0 && allData && allData.length){
+      // 전체 데이터에서 매치 갯수 미리 계산
+      const fullMatchCount = allData.filter(r => {
+        const text = `${r['투자기업명']||''} ${r['GP명']||''} ${r['주요사업(서비스)']||''}`.toLowerCase();
+        return text.includes(q);
+      }).length;
+      if(fullMatchCount > 0){
+        expandBtn.style.display = 'inline-block';
+        expandBtn.textContent = `🔎 전체 데이터에서 더 찾기 (${fullMatchCount}건)`;
+      } else {
+        expandBtn.style.display = 'none';
+      }
+    } else {
+      expandBtn.style.display = 'none';
+    }
+  }
+}
+
+function clearBriefSearch(){
+  const input = document.getElementById('brief-search-input');
+  if(input){ input.value = ''; input.focus(); }
+  applyBriefSearch();
+}
+
+// "전체 데이터에서 더 찾기" — 기간을 자동으로 전체로 확장 후 재조회
+function expandToFullData(){
+  const startInput = document.getElementById('brief-start');
+  const endInput = document.getElementById('brief-end');
+  const searchInput = document.getElementById('brief-search-input');
+  const q = searchInput ? searchInput.value.trim() : '';
+
+  if(!allData || !allData.length){
+    showToast('데이터가 로드되지 않았습니다.');
+    return;
+  }
+
+  // 전체 데이터의 투자일자 범위 계산
+  const dates = allData
+    .map(r => r['투자일자'])
+    .filter(d => d && /^\d{4}-\d{2}-\d{2}/.test(d))
+    .sort();
+
+  if(!dates.length){
+    showToast('투자일자 데이터가 없습니다.');
+    return;
+  }
+
+  // 기간을 전체로 확장
+  const firstDate = dates[0];
+  const lastDate = dates[dates.length-1];
+  if(startInput) startInput.value = firstDate;
+  if(endInput) endInput.value = lastDate;
+
+  // 재조회
+  loadBriefing();
+
+  // 검색어 유지 + 재적용
+  setTimeout(() => {
+    if(searchInput) searchInput.value = q;
+    applyBriefSearch();
+    showToast(`✅ 기간을 ${firstDate} ~ ${lastDate}로 확장했습니다.`, true);
+  }, 100);
+}
+
+// ── 주간 브리핑 빠른 기간 설정 ────────────────────────────
+function setBriefPeriod(preset){
+  const startInput = document.getElementById('brief-start');
+  const endInput = document.getElementById('brief-end');
+  if(!startInput || !endInput) return;
+
+  const today = new Date();
+  const fmt = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const da = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  };
+
+  let startDate, endDate;
+
+  if(preset === 'all'){
+    // 전체 데이터의 투자일자 범위
+    if(!allData || !allData.length){
+      showToast('⚠️ 데이터가 로드되지 않았습니다. 먼저 전체 데이터를 확인해주세요.');
+      return;
+    }
+    const dates = allData
+      .map(r => r['투자일자'])
+      .filter(d => d && /^\d{4}-\d{2}-\d{2}/.test(d))
+      .sort();
+    if(!dates.length){
+      showToast('⚠️ 투자일자 데이터가 없습니다.');
+      return;
+    }
+    startInput.value = dates[0];
+    endInput.value = dates[dates.length-1];
+  } else {
+    // 오늘 기준 역산
+    endDate = new Date(today);
+    startDate = new Date(today);
+    if(preset === 'week1') startDate.setDate(today.getDate() - 7);
+    else if(preset === 'week2') startDate.setDate(today.getDate() - 14);
+    else if(preset === 'month1') startDate.setMonth(today.getMonth() - 1);
+    startInput.value = fmt(startDate);
+    endInput.value = fmt(endDate);
+  }
+
+  // 활성 버튼 표시
+  document.querySelectorAll('.brief-preset-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.brief-preset-btn[onclick="setBriefPeriod('${preset}')"]`);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  // 자동 조회
+  loadBriefing();
+}
+
+// 사용자가 날짜 직접 변경하면 active 표시 해제
+document.addEventListener('change', function(e){
+  if(e.target && (e.target.id === 'brief-start' || e.target.id === 'brief-end')){
+    document.querySelectorAll('.brief-preset-btn').forEach(b => b.classList.remove('active'));
+  }
+});
+
+// 데이터 불러올 때 검색 바도 표시
+function showBriefSearchBar(){
+  const bar = document.getElementById('brief-search-bar');
+  if(bar) bar.style.display = 'flex';
+  // 검색어 초기화
+  const input = document.getElementById('brief-search-input');
+  if(input) input.value = '';
+  applyBriefSearch();
 }
 
 // 산업 변경 시 집중투자연도 자동 입력 (신규 등록 / 편집 모달)
